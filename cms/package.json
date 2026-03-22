@@ -10,7 +10,7 @@
     "generate:types": "payload generate:types",
     "init:db": "tsx scripts/init-db.ts",
     "seed": "tsx seed/index.ts",
-    "promote:admin": "tsx scripts/promote-admin.ts"
+    "promote:admin": "tsx seed/promote-admin.ts"
   },
   "dependencies": {
     "payload": "^3.0.0",
