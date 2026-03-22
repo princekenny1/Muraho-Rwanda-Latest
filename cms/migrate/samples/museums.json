@@ -1,0 +1,84 @@
+[
+  {
+    "name": "Kigali Genocide Memorial",
+    "description": "The final resting place of over 250,000 victims of the 1994 Genocide against the Tutsi. Features permanent exhibitions, memorial gardens, and an education center.",
+    "latitude": -1.9355,
+    "longitude": 30.0413,
+    "address": "KG 14 Ave, Kigali",
+    "openingHours": "Daily 8:00-17:00, last entry 16:00",
+    "contactEmail": "info@kgm.rw",
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "name": "Murambi Genocide Memorial",
+    "description": "Located at the former Murambi Technical School in Nyamagabe District, this memorial preserves the memory of approximately 50,000 victims.",
+    "latitude": -2.4553,
+    "longitude": 29.5828,
+    "address": "Nyamagabe District, Southern Province",
+    "openingHours": "Daily 8:00-17:00",
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "name": "Nyamata Genocide Memorial Church",
+    "description": "A former Catholic church where thousands of Tutsi sought refuge. Now preserved as a memorial with victims' belongings and documentation.",
+    "latitude": -2.2847,
+    "longitude": 30.0932,
+    "address": "Nyamata, Bugesera District",
+    "openingHours": "Daily 8:00-17:00",
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "name": "Ntarama Genocide Memorial Church",
+    "description": "Another church site where over 5,000 Tutsi were killed. Preserved with personal belongings and educational displays.",
+    "latitude": -2.2582,
+    "longitude": 30.0476,
+    "address": "Ntarama, Bugesera District",
+    "openingHours": "Daily 8:00-17:00",
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "name": "Ethnographic Museum (National Museum of Rwanda)",
+    "description": "Rwanda's oldest museum, showcasing the country's cultural heritage including traditional crafts, musical instruments, and historical artifacts.",
+    "latitude": -2.5984,
+    "longitude": 29.7395,
+    "address": "Huye, Southern Province",
+    "openingHours": "Mon-Sat 8:00-18:00, Sun 10:00-18:00",
+    "contactEmail": "info@museum.gov.rw",
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "name": "King's Palace Museum (Rukali)",
+    "description": "A reconstructed traditional royal residence in Nyanza, offering insights into pre-colonial Rwandan monarchy and traditions.",
+    "latitude": -2.3486,
+    "longitude": 29.7321,
+    "address": "Nyanza, Southern Province",
+    "openingHours": "Daily 8:00-18:00",
+    "isActive": true,
+    "isFeatured": false
+  },
+  {
+    "name": "Campaign Against Genocide Museum",
+    "description": "Located in the former parliament building in Kigali, documenting the history of the genocide and the RPF's campaign to stop it.",
+    "latitude": -1.9521,
+    "longitude": 30.0588,
+    "address": "KN 3 Road, Kigali",
+    "openingHours": "Mon-Fri 8:00-17:00, Sat 9:00-16:00",
+    "isActive": true,
+    "isFeatured": true
+  },
+  {
+    "name": "Bisesero Genocide Memorial",
+    "description": "Commemorates the resistance of Tutsi at Bisesero hill in Karongi District, where thousands fought back against genocide perpetrators.",
+    "latitude": -2.2194,
+    "longitude": 29.2417,
+    "address": "Bisesero, Karongi District",
+    "openingHours": "Daily 8:00-17:00",
+    "isActive": true,
+    "isFeatured": false
+  }
+]

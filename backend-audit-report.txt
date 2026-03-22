@@ -1,0 +1,153 @@
+================================================================================
+MURAHO RWANDA — Backend Audit Report
+================================================================================
+Date: 2026-02-09
+Scope: Payload CMS 3.0 backend (cms/), API contracts, frontend integration
+================================================================================
+
+1. SUMMARY OF ISSUES FOUND
+================================================================================
+
+AUTHENTICATION
+--------------
+• Payload CMS provides standard auth: /api/users/login, /api/users/logout,
+  /api/users/me, /api/users/refresh-token — all correctly documented.
+• Frontend useAuth calls these endpoints; no mismatches found.
+• JWT in httpOnly cookies; CSRF configured; CORS restricted to known origins.
+
+MISSING CUSTOM ENDPOINT
+-----------------------
+• Frontend api.redeemCode() calls POST /api/access-codes/redeem.
+• This endpoint did not exist. Payload collections provide CRUD only; code
+  redemption requires custom logic (validation, UserContentAccess creation,
+  CodeRedemption record, usesCount increment).
+
+FIELD MAPPING MISMATCH
+----------------------
+• Frontend useContentAccess mapUserAccess expected doc.agencyCodeId.
+• Payload returns relationship as doc.agencyCode (ID or populated object).
+• Mismatch caused agency_code_id to be null, breaking tour group access display.
+
+COLLECTION SLUG VERIFICATION
+----------------------------
+• Verified frontend collection names match CMS slugs:
+  user-content-access, access-codes, content-access, tour-agencies,
+  museum-outdoor-stops, route-stops, museums, routes, documentaries,
+  testimonies, vr-scenes, user-settings, etc. — all aligned.
+
+ENVIRONMENT & CONFIGURATION
+---------------------------
+• Cereded local dev documentation.
+• payload.config.ts validates PAYLOAD_SECRET in production.
+• Rate limiting: 500 req / 15 min; trustProxy for nginx.
+
+SECURITY (CONFIRMED)
+--------------------
+• Password hashing: Payload/bcrypt (built-in).
+• JWT expiry: Payload default.
+• CORS: whitelist (APP_URL, FRONTEND_URL, localhost in dev).
+• CSRF: whitelist configured.
+• Rate limiting: Payload built-in + nginx zones for auth/API/AI.
+
+LOGGING
+-------
+• Structured logging middleware exists (middleware/logging.ts).
+• Health endpoint includes Postgres, Redis, MinIO, AI, Ollama checks.
+
+================================================================================
+2. DETAILED LIST OF CHANGES MADE
+================================================================================
+
+CHANGE 1: Add /api/access-codes/redeem custom endpoint
+------------------------------------------------------
+File: cms/endpoints/redeem.ts (NEW)
+• Implemented full redemption flow:
+  - Require authenticated user (401 if not)
+  - Validate code: exists, isActive, usesCount < maxUses, not expired, valid start
+  - Check for existing redemption (idempotent — return success if already redeemed)
+  - Create UserContentAccess (accessType: tour_code, agencyCode, expiresAt)
+  - Create CodeRedemption record
+  - Increment usesCount on access-codes
+• Returns: { success: true, accessLevel, expiresAt, agencyName } on success
+• Returns: { success: false, error } with 400/401/404/422/500 on failure
+• Registered in cms/endpoints/index.ts
+
+CHANGE 2: Fix frontend useContentAccess mapUserAccess
+-----------------------------------------------------
+File: frontend/src/hooks/useContentAccess.tsx
+• Updated agency_code_id mapping:
+  - Was: doc.agencyCodeId ?? null
+  - Now: typeof doc.agencyCode === "object" ? doc.agencyCode?.id : doc.agencyCode ?? doc.agencyCodeId
+• Payload returns relationship as agencyCode (ID string when depth 0, object when populated).
+
+CHANGE 3: Add cms/.env.example
+------------------------------
+File: cms/.env.example (NEW)
+• Documented DATABASE_URI, PAYLOAD_SECRET, S3_*, APP_URL, FRONTEND_URL,
+  REDIS_URL, AI_SERVICE_URL, LOG_LEVEL, payments env vars.
+• Required for local development without Docker.
+
+================================================================================
+3. REASONS FOR EACH CHANGE
+================================================================================
+
+Redeem endpoint: Frontend RedeemCodePage and useContentAccess.redeemCode()
+expect this API. Without it, code redemption fails with 404. Redemption logic
+cannot be implemented via standard CRUD (requires atomic validation + create +
+update across collections).
+
+Field mapping: Payload API uses field names as defined in schema (agencyCode).
+Frontend expected agencyCodeId (common REST convention for FK). Fix ensures
+tour group access badges and access checks work correctly.
+
+.env.example: Developers need clear documentation of required env vars to run
+CMS locally. Prevents "DATABASE_URI is required" and similar startup failures.
+
+================================================================================
+4. BEFORE vs AFTER BEHAVIOR
+================================================================================
+
+BEFORE
+------
+• POST /api/access-codes/redeem → 404 (endpoint did not exist)
+• User redeems code → failure, "Failed to redeem code"
+• Tour group access from UserContentAccess → agency_code_id always null
+  → TourGroupBadge and tour_code access checks broken
+
+AFTER
+-----
+• POST /api/access-codes/redeem → 200 + { success, accessLevel, expiresAt, agencyName }
+  or 4xx + { success: false, error }
+• User redeems valid code → success, UserContentAccess + CodeRedemption created
+• agency_code_id correctly populated from agencyCode → TourGroupBadge works
+
+================================================================================
+5. BEFORE vs AFTER TECH STACK
+================================================================================
+
+No tech stack changes. Backend remains:
+• Payload CMS 3.0 + Next.js 15
+• PostgreSQL + pgvector + PostGIS (@payloadcms/db-postgres)
+• S3/MinIO (@payloadcms/storage-s3)
+• Lexical rich text (@payloadcms/richtext-lexical)
+
+================================================================================
+6. SECURITY AND BEST-PRACTICE IMPROVEMENTS APPLIED
+================================================================================
+
+• Redeem endpoint: Requires authentication (401 if no user).
+• Redeem endpoint: Validates all business rules before creating records.
+• Redeem endpoint: Idempotent for already-redeemed codes (no double-count).
+• Redeem endpoint: Logs successful redemptions for audit.
+• Field mapping: Handles both populated and non-populated relationship safely.
+• .env.example: Documents required secrets; PAYLOAD_SECRET validated in prod.
+
+Existing (unchanged) best practices:
+• CORS whitelist, CSRF whitelist, rate limiting
+• httpOnly JWT cookies
+• Password hashing via Payload
+• Structured logging and health checks
+
+================================================================================
+END OF REPORT
+================================================================================

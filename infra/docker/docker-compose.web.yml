@@ -1,0 +1,42 @@
+# ══════════════════════════════════════════════════════════
+# Muraho Rwanda — Web Layer (CMS + Frontend)
+# Keep this separate for frequent app/frontend deployments.
+# Requires core stack from docker-compose.prod.yml running.
+# ══════════════════════════════════════════════════════════
+
+services:
+  app:
+    build:
+      context: ../../cms
+      dockerfile: Dockerfile
+    container_name: muraho-app
+    environment:
+      DATABASE_URI: postgresql://muraho:${DB_PASSWORD}@muraho-postgres:5432/muraho
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET}
+      AI_SERVICE_URL: http://muraho-ai:8000
+      REDIS_URL: redis://muraho-redis:6379/1
+      S3_ENDPOINT: http://muraho-minio:9000
+      S3_BUCKET: muraho-media
+      S3_ACCESS_KEY: ${MINIO_USER}
+      S3_SECRET_KEY: ${MINIO_PASSWORD}
+      S3_REGION: us-east-1
+      APP_URL: ${APP_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
+      NEXT_PUBLIC_MAPBOX_TOKEN: ${MAPBOX_TOKEN}
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: muraho-frontend
+    ports:
+      - "5173:80"
+
+networks:
+  default:
+    external: true
+    name: muraho-shared

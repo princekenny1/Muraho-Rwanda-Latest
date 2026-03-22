@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Muraho Rwanda — Offline</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 2rem;
+      background: linear-gradient(160deg, #f8f6f0 0%, #e8e4d8 100%);
+      color: #1a1a2e;
+    }
+    .container { max-width: 420px; text-align: center; }
+    .icon {
+      width: 80px; height: 80px; margin: 0 auto 1.5rem;
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    }
+    .icon svg { width: 36px; height: 36px; color: #8b5cf6; }
+    h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+    p { color: #64748b; line-height: 1.6; margin-bottom: 2rem; }
+    .btn {
+      display: inline-block; padding: 0.75rem 2rem;
+      background: #1a1a2e; color: white; border: none;
+      border-radius: 0.75rem; font-size: 0.95rem; font-weight: 500;
+      cursor: pointer; text-decoration: none;
+    }
+    .btn:hover { background: #2d2d4e; }
+    .hint { margin-top: 1.5rem; font-size: 0.85rem; color: #94a3b8; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 010 12.728M5.636 5.636a9 9 0 000 12.728M8.464 15.536a5 5 0 010-7.072M15.536 8.464a5 5 0 010 7.072M12 12h.01" />
+      </svg>
+    </div>
+    <h1>You're offline</h1>
+    <p>
+      It looks like you've lost your internet connection. Any content you've
+      downloaded for offline access is still available.
+    </p>
+    <a href="/home" class="btn">View Saved Content</a>
+    <p class="hint">Your connection will be restored automatically when available.</p>
+  </div>
+</body>
+</html>

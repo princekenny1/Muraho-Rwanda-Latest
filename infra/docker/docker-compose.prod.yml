@@ -1,0 +1,63 @@
+# ══════════════════════════════════════════════════════════
+#  Muraho Rwanda — Production Docker Compose
+#  Self-hosted on GPU server. vLLM for LLM inference.
+# ══════════════════════════════════════════════════════════
+
+services:
+  # ── PostgreSQL + pgvector + PostGIS ──────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: muraho-postgres
+    environment:
+      POSTGRES_DB: muraho
+      POSTGRES_USER: muraho
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muraho"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: muraho-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO (Media Storage) ────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: muraho-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  model_cache:
+
+networks:
+  default:
+    name: muraho-shared

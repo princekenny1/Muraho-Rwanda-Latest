@@ -1,0 +1,45 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://192.168.1.100:3000/api",
+        "EXPO_PUBLIC_MAPBOX_TOKEN": "pk.xxx_dev"
+      }
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://staging.muraho.rw/api",
+        "EXPO_PUBLIC_MAPBOX_TOKEN": "pk.xxx_staging"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://muraho.rw/api",
+        "EXPO_PUBLIC_MAPBOX_TOKEN": "pk.xxx_prod"
+      },
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "autoIncrement": true
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./play-store-key.json",
+        "track": "internal"
+      },
+      "ios": {
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID"
+      }
+    }
+  }
+}

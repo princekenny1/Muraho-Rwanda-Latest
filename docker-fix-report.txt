@@ -1,0 +1,143 @@
+================================================================================
+MURAHO RWANDA — Docker Build Fix Report
+================================================================================
+Date: 2026-02-09
+Error: Next.js build failed — "Couldn't find any `pages` or `app` directory"
+================================================================================
+
+1. ROOT CAUSE
+================================================================================
+
+Next.js requires either a `pages` directory (Pages Router) or an `app` directory
+(App Router) to build. The Payload CMS project (cms/) had neither. Payload 3.0
+with @payloadcms/next integrates into Next.js and expects the app directory
+structure to exist — it does not auto-generate it if missing.
+
+The Docker build runs `npm run build` which invokes `next build`, and Next.js
+failed because it could not find any routes to compile.
+
+================================================================================
+2. CHANGES MADE
+================================================================================
+
+CHANGE 1: Created app directory structure (cms/app/)
+---------------------------------------------------
+Added the minimal Next.js App Router + Payload CMS structure:
+
+  app/
+  ├── layout.tsx              # Root layout (html, body)
+  ├── page.tsx                # Root page (redirects to /admin)
+  └── (payload)/
+      ├── layout.tsx          # Payload layout (RootLayout, server functions)
+      ├── admin/
+      │   ├── importMap.js    # Empty import map (default Payload admin UI)
+      │   └── [[...segments]]/page.tsx   # Admin catch-all
+      └── api/
+          └── [[...slug]]/route.ts       # REST API catch-all
+
+BEFORE: cms/ had no app/ or pages/ directory
+AFTER:  cms/app/ contains full Payload admin + API routing
+
+CHANGE 2: Added @payload-config path (cms/tsconfig.json)
+--------------------------------------------------------
+Payload layout and admin pages import `config from "@payload-config"`.
+
+BEFORE: No @payload-config path
+AFTER:  "paths": { ..., "@payload-config": ["./payload.config.ts"] }
+
+CHANGE 3: Fixed admin page type compatibility (app/(payload)/admin/[[...segments]]/page.tsx)
+--------------------------------------------------------------------------------------------
+Next.js 15 passes searchParams as Promise<{ [key: string]: string | string[] | undefined }>.
+Payload RootPage expects Promise<{ [key: string]: string | string[] }> (no undefined).
+
+BEFORE: Passed args directly → type error
+AFTER:  Added sanitizeSearchParams() to filter undefined values; wrapped params
+        to ensure segments defaults to []; pass Promise.resolve(config) for RootPage.
+
+CHANGE 4: Added redis dependency (cms/package.json)
+--------------------------------------------------
+Health endpoint (endpoints/health.ts) imports "redis" for Redis connectivity check.
+The module was not in dependencies, causing "Module not found: Can't resolve 'redis'".
+
+BEFORE: redis not in package.json
+AFTER:  "redis": "^4.7.0" added to dependencies
+        Ran npm install to update package-lock.json.
+
+CHANGE 5: Dockerfile — copy app directory (cms/Dockerfile)
+---------------------------------------------------------
+Production stage copies collections, endpoints, globals, etc., but not app/.
+
+BEFORE:
+  COPY --from=base /app/access ./access
+  EXPOSE 3000
+
+AFTER:
+  COPY --from=base /app/access ./access
+  COPY --from=base /app/app ./app
+  EXPOSE 3000
+
+CHANGE 6: Fixed AccessControl.ts type error (cms/collections/AccessControl.ts)
+-----------------------------------------------------------------------------
+TypeScript build failed: Access read function return type for AgencyAccessCodes.
+Payload 3 Where type stricter — nested agency.adminUser query needed cast.
+
+BEFORE: return { agency: { adminUser: { equals: user.id } } };
+AFTER:  return { agency: { adminUser: { equals: String(user.id) } } } as any;
+
+CHANGE 7: Added .dockerignore (cms/.dockerignore)
+-------------------------------------------------
+Reduces Docker build context by excluding node_modules, .next, etc.
+
+BEFORE: No .dockerignore (large context transfer)
+AFTER:  Excludes node_modules, .next, .git, .env, *.log, .DS_Store
+
+================================================================================
+3. BEFORE vs AFTER BEHAVIOR
+================================================================================
+
+BEFORE
+------
+  docker compose up -d
+  → Building payload...
+  → RUN npm run build
+  → Error: Couldn't find any `pages` or `app` directory
+  → Build failed
+
+AFTER
+-----
+  docker compose up -d
+  → Building payload...
+  → RUN npm run build
+  → Next.js compiles app/, (payload)/admin, (payload)/api
+  → Build succeeds (once npm install has updated lock file for redis)
+  → Payload CMS serves at /admin and /api
+
+================================================================================
+4. BEST PRACTICE IMPROVEMENTS
+================================================================================
+
+• Minimal app structure: Only required routes (admin, api), no extra pages.
+• Type safety: Properly adapt Next.js 15 async params/searchParams to Payload types.
+• Dependency hygiene: Redis added explicitly (used by health check).
+• Docker: .dockerignore reduces build context and speeds up builds.
+• Config paths: @payload-config alias follows Payload conventions.
+
+================================================================================
+5. VERIFICATION
+================================================================================
+
+To verify the fix:
+  1. cd cms && npm install   # Ensure package-lock.json is up to date
+  2. cd infra/docker
+  3. docker compose up -d
+  4. Wait for build to complete (~3–5 min for full stack)
+  5. Access http://localhost:3000/admin for Payload admin
+  6. Access http://localhost:3000/api/health for health check
+
+If PostgreSQL is not running, the build may hang during `next build` when
+Payload initializes the database adapter. Use Docker Compose to start postgres
+first, or set DATABASE_URI to a running PostgreSQL instance.
+
+================================================================================
+END OF REPORT
+================================================================================

@@ -1,0 +1,11 @@
+name,description,locationType,latitude,longitude,province,district,isActive
+Inema Arts Center,"Contemporary art gallery and studio space showcasing Rwandan artists",cultural_site,-1.9523,30.0915,Kigali,Kacyiru,true
+Nyungwe Forest National Park,"One of the oldest rainforests in Africa with chimpanzee tracking and canopy walk",natural_site,-2.4819,29.2200,Western,Nyamasheke,true
+Volcanoes National Park,"Home to mountain gorillas in the Virunga Mountains",natural_site,-1.4583,29.4833,Northern,Musanze,true
+Akagera National Park,"Rwanda's largest protected wetland and savanna ecosystem",natural_site,-1.8500,30.7500,Eastern,Kayonza,true
+Iby'Iwacu Cultural Village,"Living cultural village near Volcanoes NP offering traditional experiences",cultural_site,-1.4767,29.5683,Northern,Musanze,true
+Kimironko Market,"Kigali's largest market for crafts, textiles, and local produce",cultural_site,-1.9392,30.1121,Kigali,Gasabo,true
+Rwesero Art Museum,"Art museum housed in the former King Mutara III Rudahigwa's palace",cultural_site,-2.3547,29.7350,Southern,Nyanza,true
+Genocide Archive of Rwanda,"Digital archive preserving testimonies and documentation of the genocide",historical,-1.9452,30.0594,Kigali,Nyarugenge,true
+Lake Kivu,"One of Africa's Great Lakes with beaches and cultural fishing traditions",natural_site,-2.0833,29.2500,Western,Rubavu,true
+Gishwati-Mukura National Park,"Recently established park protecting montane forest ecosystems",natural_site,-1.8833,29.3667,Western,Rutsiro,true

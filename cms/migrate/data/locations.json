@@ -1,0 +1,102 @@
+[
+  {
+    "name": "Volcanoes National Park",
+    "description": "Home to endangered mountain gorillas, golden monkeys, and five volcanic peaks in the Virunga Mountains. A UNESCO Biosphere Reserve and Rwanda's premier wildlife destination.",
+    "locationType": "natural_site",
+    "latitude": -1.4833,
+    "longitude": 29.5333,
+    "province": "Northern",
+    "district": "Musanze",
+    "isActive": true
+  },
+  {
+    "name": "Nyungwe Forest National Park",
+    "description": "One of Africa's oldest montane rainforests with 13 primate species including chimpanzees, 310 bird species, and the famous canopy walkway suspended 50 meters above the forest floor.",
+    "locationType": "natural_site",
+    "latitude": -2.4833,
+    "longitude": 29.2500,
+    "province": "Southern",
+    "district": "Nyamasheke",
+    "isActive": true
+  },
+  {
+    "name": "Akagera National Park",
+    "description": "Rwanda's largest national park featuring Big Five wildlife including recently reintroduced lions and rhinos. Savanna, woodlands, and wetlands along the Akagera River create diverse habitats.",
+    "locationType": "natural_site",
+    "latitude": -1.8833,
+    "longitude": 30.6167,
+    "province": "Eastern",
+    "district": "Kayonza",
+    "isActive": true
+  },
+  {
+    "name": "Lake Kivu",
+    "description": "One of Africa's Great Lakes shared with DRC, known for its methane-rich waters and stunning mountain backdrop. Resort towns along its shore offer beaches, boat tours, and cultural experiences.",
+    "locationType": "natural_site",
+    "latitude": -2.0000,
+    "longitude": 29.0500,
+    "province": "Western",
+    "district": "Rubavu",
+    "isActive": true
+  },
+  {
+    "name": "Kimironko Market",
+    "description": "Kigali's largest and most vibrant market. A sensory experience of colorful fabrics, fresh produce, spices, crafts, and everyday goods. Essential for understanding daily Rwandan life.",
+    "locationType": "cultural_site",
+    "latitude": -1.9394,
+    "longitude": 30.1056,
+    "province": "Kigali",
+    "district": "Gasabo",
+    "isActive": true
+  },
+  {
+    "name": "Inema Arts Center",
+    "description": "Founded by self-taught artists Emmanuel Nkuranga and Innocent Nkurunziza, this vibrant gallery and studio space showcases contemporary Rwandan art and hosts workshops, dance performances, and cultural events.",
+    "locationType": "cultural_site",
+    "latitude": -1.9280,
+    "longitude": 29.8350,
+    "province": "Kigali",
+    "district": "Kicukiro",
+    "isActive": true
+  },
+  {
+    "name": "Butare Cathedral",
+    "description": "One of Rwanda's largest churches, the Cathedral of Our Lady of the Holy Rosary was built in 1936 during the colonial era. Its red brick construction and twin towers are an architectural landmark.",
+    "locationType": "historical",
+    "latitude": -2.6056,
+    "longitude": 29.7369,
+    "province": "Southern",
+    "district": "Huye",
+    "isActive": true
+  },
+  {
+    "name": "Iby'Iwacu Cultural Village",
+    "description": "An interactive cultural village near Volcanoes National Park where visitors experience traditional Rwandan life — banana beer brewing, archery, traditional dance, and the home of a former local king.",
+    "locationType": "cultural_site",
+    "latitude": -1.4950,
+    "longitude": 29.5350,
+    "province": "Northern",
+    "district": "Musanze",
+    "isActive": true
+  },
+  {
+    "name": "Gishwati-Mukura National Park",
+    "description": "Rwanda's newest national park (2015), protecting two fragments of montane forest. Home to chimpanzees, golden monkeys, and 232 bird species. The Gishwati canopy trail offers treetop views.",
+    "locationType": "natural_site",
+    "latitude": -1.8283,
+    "longitude": 29.3667,
+    "province": "Western",
+    "district": "Rutsiro",
+    "isActive": true
+  },
+  {
+    "name": "Nyamirambo Women's Center",
+    "description": "A community center in Kigali's most diverse neighborhood offering walking tours, cooking classes, and craft workshops. Founded to empower women through skills training and cultural tourism.",
+    "locationType": "cultural_site",
+    "latitude": -1.9775,
+    "longitude": 29.8425,
+    "province": "Kigali",
+    "district": "Nyarugenge",
+    "isActive": true
+  }
+]

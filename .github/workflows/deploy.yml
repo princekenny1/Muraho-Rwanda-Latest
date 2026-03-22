@@ -1,0 +1,64 @@
+# ══════════════════════════════════════════════════════════
+#  Muraho Rwanda — Deploy to Production
+#  Triggers on push to main after CI passes
+# ══════════════════════════════════════════════════════════
+
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            cd /opt/muraho-rwanda
+
+            # Pull latest
+            git pull origin main
+
+            # Rebuild and restart services
+            cd infra/docker
+            docker compose pull
+            docker compose build --parallel
+            docker compose up -d --remove-orphans
+
+            # Wait for health checks
+            echo "Waiting for services to be healthy..."
+            sleep 15
+
+            # Verify
+            curl -sf http://localhost:3000/api/health > /dev/null && echo "✓ CMS healthy" || echo "✗ CMS failed"
+            curl -sf http://localhost:8000/health > /dev/null && echo "✓ AI healthy" || echo "✗ AI failed"
+            curl -sf http://localhost:5173 > /dev/null && echo "✓ Frontend healthy" || echo "✗ Frontend failed"
+
+            # Run any pending migrations
+            docker compose exec -T payload npx payload migrate
+
+            # Renew SSL if needed
+            docker compose --profile production run --rm certbot renew --quiet || true
+
+            echo "═══════════════════════════"
+            echo "  Deploy complete! 🇷🇼"
+            echo "═══════════════════════════"
+
+      - name: Notify on failure
+        if: failure()
+        run: echo "::error::Deployment failed. Check SSH logs above."

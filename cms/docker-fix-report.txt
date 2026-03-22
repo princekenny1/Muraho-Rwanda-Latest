@@ -1,0 +1,127 @@
+================================================================================
+MURAHO RWANDA — Docker Build Fix Report
+================================================================================
+Date: 2026-02-09
+Original Error: Next.js build failed with "Couldn't find any `pages` or `app` directory"
+Final Result: Payload CMS Docker build succeeds
+
+================================================================================
+SUMMARY OF CHANGES
+================================================================================
+
+1. ENDPOINT HANDLERS: Payload 3 Response-Based Pattern
+   - Payload 3 handlers must use (req) => Response.json(...) instead of (req, res) => res.status().json(...)
+   - Updated: tts.ts, spatial.ts (4 handlers), webhooks.ts (2 handlers)
+
+2. TYPE FIXES: Payload ID types (string | number)
+   - Payload IDs can be string or number; fixed assignments to use String()
+   - Updated: importExhibition.ts (coverImageId, targetRoomId), search.ts (id)
+
+3. TSConfig: Exclude migrate and seed from Next.js build
+   - migrate/index.ts uses csv-parse/sync; excluding avoids missing module error
+   - Updated: tsconfig.json exclude: ["node_modules", ".next", "migrate", "seed"]
+
+4. Payload Config: Payload 3 API compatibility
+   - admin.meta: favicon/ogImage → icons + openGraph
+   - i18n.supportedLanguages: string labels → imports from @payloadcms/translations/languages
+   - Removed rateLimit (removed from Payload 3 Config type)
+
+5. Dockerfile: PAYLOAD_SECRET for build-time
+   - Next.js build runs with NODE_ENV=production; Payload validates secret
+   - Added ARG/ENV PAYLOAD_SECRET for build; runtime overrides via docker-compose
+
+================================================================================
+FILE-BY-FILE CHANGES
+================================================================================
+
+--- cms/endpoints/tts.ts ---
+BEFORE: (req, res) => { ... res.send(Buffer); res.status().json(); }
+AFTER:  (req) => { ... return new Response(audioBuffer, { headers }); return Response.json(); }
+REASON: Payload 3 PayloadHandler returns Response, no res parameter.
+
+--- cms/endpoints/spatial.ts ---
+BEFORE: (req, res) => { const { ... } = req.body; return res.status(400).json(); }
+AFTER:  (req) => { const body = (await req.json?.()) || req.body; return Response.json(..., { status: 400 }); }
+REASON: Payload 3 handler signature; body parsed from Request.
+
+--- cms/endpoints/webhooks.ts ---
+BEFORE: (req, res) => { ... return res.status(400).json(); }
+AFTER:  (req) => { rawBody = await req.text?.(); event = JSON.parse(rawBody); return Response.json(..., { status }); }
+REASON: Stripe needs raw body for signature; use req.text() and Response.json.
+
+--- cms/endpoints/importExhibition.ts ---
+BEFORE: coverImageId = uploaded.id;  targetRoomId = newRoom.id;
+AFTER:  coverImageId = String(uploaded.id);  targetRoomId = String(newRoom.id);
+REASON: Payload ID can be number; coverImageId/targetRoomId typed as string.
+
+--- cms/endpoints/search.ts ---
+BEFORE: id: doc.id
+AFTER:  id: String(doc.id)
+REASON: Result id typed as string; doc.id can be number.
+
+--- cms/tsconfig.json ---
+BEFORE: "exclude": ["node_modules", ".next"]
+AFTER:  "exclude": ["node_modules", ".next", "migrate", "seed"]
+REASON: migrate uses csv-parse/sync not in package.json; exclude from Next.js build.
+
+--- cms/payload.config.ts ---
+BEFORE:
+  admin: {
+    meta: {
+      titleSuffix: " — Muraho Rwanda",
+      favicon: "/favicon.png",
+      ogImage: "/og-image.png",
+    },
+  },
+  rateLimit: { max: 500, window: 15*60000, trustProxy: true },
+  i18n: {
+    supportedLanguages: { en: "English", fr: "Français", rw: "Ikinyarwanda" },
+    fallbackLanguage: "en",
+  },
+
+AFTER:
+  admin: {
+    meta: {
+      titleSuffix: " — Muraho Rwanda",
+      icons: [{ rel: "icon", type: "image/png", url: "/favicon.png" }],
+      openGraph: { images: [{ url: "/og-image.png" }] },
+    },
+  },
+  // rateLimit removed (not in Payload 3 Config)
+  i18n: {
+    supportedLanguages: { en, fr },  // imports from @payloadcms/translations/languages
+    fallbackLanguage: "en",
+  },
+
+REASON: Payload 3 MetaConfig uses icons[] and openGraph; supportedLanguages expects Language objects; rateLimit removed.
+
+--- cms/Dockerfile ---
+BEFORE:
+# Build
+COPY . .
+RUN npm run build
+
+AFTER:
+# Build
+COPY . .
+ARG PAYLOAD_SECRET=build-placeholder-replace-at-runtime
+ENV PAYLOAD_SECRET=${PAYLOAD_SECRET}
+RUN npm run build
+
+REASON: Next.js build sets NODE_ENV=production; Payload throws if PAYLOAD_SECRET missing.
+
+================================================================================
+BEST PRACTICES APPLIED
+================================================================================
+- Use Response.json() and new Response() for web-standard handlers
+- Explicit String() for Payload IDs when type expects string
+- Exclude CLI/migrate scripts from app build
+- Use Payload 3 translation imports for i18n
+- Build-time placeholder for secrets; real secret at runtime via env
+
+================================================================================
+VERIFICATION
+================================================================================
+- docker compose build payload — SUCCESS
+- Payload CMS image built and tagged
+- ai-service build may take longer (PyTorch/sentence-transformers); run separately if needed

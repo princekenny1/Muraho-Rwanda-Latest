@@ -1,0 +1,75 @@
+# ══════════════════════════════════════════════════════════
+#  Muraho Rwanda — Development Docker Compose
+#  All services self-hosted. Zero external AI dependencies.
+# ══════════════════════════════════════════════════════════
+
+services:
+
+  # ── PostgreSQL + pgvector + PostGIS ──────────────────
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: muraho-postgres
+    environment:
+      POSTGRES_DB: muraho
+      POSTGRES_USER: muraho
+      POSTGRES_PASSWORD: muraho_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U muraho"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (caching + rate limiting + sessions) ───────
+  redis:
+    image: redis:7-alpine
+    container_name: muraho-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── MinIO (S3-compatible media storage) ──────────────
+  minio:
+    image: minio/minio:latest
+    container_name: muraho-minio
+    environment:
+      MINIO_ROOT_USER: muraho_minio
+      MINIO_ROOT_PASSWORD: muraho_minio_secret
+    ports:
+      - "9000:9000"     # API
+      - "9001:9001"     # Console
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+
+# ──────────────────────────────────────────────────────
+#  NOTE: The AI service (FastAPI) and CMS (Next.js/Payload)
+#  run directly on the host for development (not in Docker).
+#
+#  Ollama also runs on the host:
+#    curl -fsSL https://ollama.com/install.sh | sh
+#    ollama pull mistral
+#
+#  For production, see docker-compose.prod.yml
+# ──────────────────────────────────────────────────────

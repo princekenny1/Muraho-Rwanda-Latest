@@ -1,0 +1,125 @@
+================================================================================
+MURAHO RWANDA — End-to-End Status Report
+================================================================================
+Date: 2026-02-09
+================================================================================
+
+1. BACKEND STARTUP STATUS
+================================================================================
+
+REQUIREMENTS
+------------
+• PostgreSQL (with pgvector, PostGIS extensions)
+• Node.js >= 20
+• MinIO/S3 (for media uploads)
+• Optional: Redis (rate limiting), AI service (Ask Rwanda)
+
+STARTUP COMMANDS
+----------------
+  cd cms
+  cp .env.example .env   # Edit with DATABASE_URI, PAYLOAD_SECRET, S3_*
+  npm install
+  npm run dev            # or: npm run build && npm run start
+
+DOCKER (RECOMMENDED)
+--------------------
+  cd infra/docker
+  docker compose up -d   # Starts postgres, redis, minio, payload, ai-service
+  # Payload: http://localhost:3000
+  # Admin:   http://localhost:3000/admin
+
+STATUS
+------
+• Backend code compiles (no TypeScript errors in cms/endpoints, collections).
+• Build requires DATABASE_URI and running PostgreSQL.
+• If PostgreSQL is not running, build/start will fail with connection error.
+• Health endpoint: GET /api/health — returns status of postgres, redis, minio, ai, ollama.
+
+================================================================================
+2. AUTH FLOW STATUS
+================================================================================
+
+FRONTEND → BACKEND CONTRACT
+---------------------------
+• POST /api/users/login     { email, password } → { user, token, exp }
+• POST /api/users/logout    → 200
+• GET  /api/users/me        → { user } or null (requires cookie)
+• POST /api/users/refresh-token → { user, refreshedToken, exp }
+• POST /api/users           { email, password, fullName } → user (register)
+• POST /api/users/forgot-password  { email }
+• POST /api/users/reset-password   { token, password }
+
+STATUS
+------
+• Payload CMS provides all above endpoints for Users collection (auth: true).
+• Frontend useAuth.tsx calls api.login, api.logout, api.me, api.refreshToken.
+• JWT stored in httpOnly cookie; credentials: "include" on fetch.
+• CORS and CSRF whitelist include localhost:5173 for dev.
+
+================================================================================
+3. CRUD FLOW STATUS
+================================================================================
+
+COLLECTIONS VERIFIED
+--------------------
+• stories, testimonies, documentaries, museums, museum-exhibits
+• museum-outdoor-stops, routes, route-stops, stop-content-blocks
+• locations, vr-scenes, vr-hotspots
+• users, tour-agencies, access-codes, user-content-access, content-access
+• subscriptions, payments, agency-pricing-plans
+• user-settings, user-saved-items, user-progress, user-downloads
+• ai-conversations, analytics-events
+
+API PATTERNS
+------------
+• api.find(collection, { where, sort, limit, depth })
+• api.findOne(collection, where, depth)
+• api.findById(collection, id, depth)
+• api.create(collection, data)
+• api.update(collection, id, data)
+• api.delete(collection, id)
+
+STATUS
+------
+• Frontend api client (lib/api/client.ts) uses Payload REST query syntax.
+• where clauses: { field: { equals, in, greater_than, exists } }
+• Collection slugs match CMS config. CRUD flows aligned.
+
+================================================================================
+4. FRONTEND → BACKEND INTEGRATION STATUS
+================================================================================
+
+CUSTOM ENDPOINTS
+----------------
+• POST /api/access-codes/redeem    — FIXED (was missing, now implemented)
+• POST /api/ask-rwanda             — Exists (proxies to AI service)
+• POST /api/payments/create-checkout — Exists
+• POST /api/webhooks/stripe        — Exists
+• POST /api/webhooks/flutterwave   — Exists
+• POST /api/spatial/nearby         — Exists
+• GET  /api/spatial/route          — Exists
+• GET  /api/search                 — Exists
+• GET  /api/health                 — Exists
+
+FIELD MAPPING
+-------------
+• useContentAccess mapUserAccess: FIXED (agencyCode → agency_code_id)
+• Other hooks use Payload camelCase (accessType, contentType, etc.) — aligned.
+
+VITE_API_URL
+------------
+• Dev: VITE_API_URL=/api (proxies to backend) or http://localhost:3000/api
+• Prod (Docker): VITE_API_URL=http://payload:3000/api (internal) or /api (via nginx)
+
+================================================================================
+5. RECOMMENDATIONS
+================================================================================
+
+• Run backend with Docker Compose for full stack (postgres, redis, minio, payload).
+• Ensure .env has DATABASE_URI before npm run dev or build.
+• Test auth: create user via /admin, then login from frontend AuthPage.
+• Test redeem: create access-codes + tour-agencies in admin, redeem from RedeemCodePage.
+
+================================================================================
+END OF STATUS REPORT
+================================================================================
