@@ -33,9 +33,9 @@ import type {
 
 interface PayloadRoute {
   id: string;
-  name: string;
+  title: string;
   slug: string;
-  shortDescription?: string;
+  description?: string;
   heroImage?: { id: string; url: string } | string;
   difficulty?: string;
   estimatedHours?: number;
@@ -45,6 +45,7 @@ interface PayloadRoute {
   category?: string;
   sensitivityLevel?: string;
   offlineAvailable?: boolean;
+  status?: string;
   _status?: string;
   stops?: Array<PayloadRouteStop | string>;
 }
@@ -87,9 +88,9 @@ function mapRoute(doc: PayloadRoute): Route {
 
   return {
     id: doc.id,
-    title: doc.name,
+    title: doc.title,
     slug: doc.slug,
-    description: doc.shortDescription,
+    description: doc.description,
     cover_image: heroImg,
     duration_minutes: doc.estimatedHours ? Math.round(doc.estimatedHours * 60) : null,
     estimated_hours: doc.estimatedHours,
@@ -100,7 +101,7 @@ function mapRoute(doc: PayloadRoute): Route {
     category: doc.category || null,
     sensitivity_level: doc.sensitivityLevel || null,
     offline_available: doc.offlineAvailable ?? false,
-    status: (doc._status || "draft") as Route["status"],
+    status: (doc.status || doc._status || "draft") as Route["status"],
     created_by: null,
     published_at: null,
     stops,
@@ -154,7 +155,7 @@ export function useRoutes() {
   return useQuery({
     queryKey: ["routes"],
     queryFn: async () => {
-      const res = await api.find("routes", { depth: 2, limit: 100, sort: "name" });
+      const res = await api.find("routes", { depth: 2, limit: 100, sort: "title" });
       return (res.docs as PayloadRoute[]).map(mapRoute);
     },
   });
@@ -182,9 +183,9 @@ export function useRouteMutations() {
       cover_image?: string;
     }) => {
       const payload: Record<string, unknown> = {
-        name: data.title,
+        title: data.title,
         slug: data.slug,
-        shortDescription: data.description,
+        description: data.description,
       };
       // If cover_image is a URL from our media, we'd need the media ID.
       // For now pass as-is; the CMS endpoint or a follow-up upload handles this.
@@ -210,9 +211,9 @@ export function useRouteMutations() {
       cover_image?: string;
     }) => {
       const payload: Record<string, unknown> = {};
-      if (data.title !== undefined) payload.name = data.title;
+      if (data.title !== undefined) payload.title = data.title;
       if (data.slug !== undefined) payload.slug = data.slug;
-      if (data.description !== undefined) payload.shortDescription = data.description;
+      if (data.description !== undefined) payload.description = data.description;
       if (data.cover_image !== undefined) payload.heroImage = data.cover_image;
       return api.update("routes", id, payload);
     },

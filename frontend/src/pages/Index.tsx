@@ -119,10 +119,10 @@ const Index = () => {
         return (
           <Home
             onStoryClick={(storyId) => navigateTo({ type: "story", storyId })}
-            onRouteClick={(routeId) => navigateTo({ type: "route", routeId })}
-            onThemesClick={() => navigateTo({ type: "themes" })}
-            onMemorialsClick={() => navigateTo({ type: "memorials" })}
-            onMapClick={() => navigateTo({ type: "map" })}
+            onRouteClick={() => navigate("/routes")}
+            onThemesClick={() => navigate("/themes")}
+            onMemorialsClick={() => navigate("/memorials")}
+            onMapClick={() => navigate("/map")}
             onAskClick={handleAskRwandaClick}
             onTestimonyClick={handleTestimonyClick}
             onDocumentaryClick={handleDocumentaryClick}

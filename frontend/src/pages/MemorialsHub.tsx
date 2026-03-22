@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   Clock,
@@ -12,16 +13,31 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api/client";
 import kigaliMemorial from "@/assets/Kigali-Genocide-Memorial.jpg";
 import murambiMemorial from "@/assets/Murambi-Genocide-Memorial.jpg";
 import nyanzaMemorial from "@/assets/Nyanza-of-Butare-Genocide-memorial-.jpg";
 
 interface MemorialsHubProps {
-  onBack: () => void;
-  onMuseumClick: (museumId: string) => void;
+  onBack?: () => void;
+  onMuseumClick?: (museumId: string) => void;
 }
 
-const museums = [
+interface MuseumDoc {
+  id: string;
+  slug?: string;
+  name?: string;
+  shortDescription?: string;
+  description?: string;
+  address?: string;
+  openingHours?: Record<string, any>;
+  isFeatured?: boolean;
+  isActive?: boolean;
+  coverImage?: string;
+  heroImage?: string | { url?: string };
+}
+
+const fallbackMuseums = [
   {
     id: "kgm",
     name: "Kigali Genocide Memorial",
@@ -80,8 +96,74 @@ const categoryColors = {
 
 export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
   const navigate = useNavigate();
-  const featuredMuseum = museums.find((m) => m.featured);
-  const otherMuseums = museums.filter((m) => !m.featured);
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["public-memorials-hub"],
+    queryFn: async () => {
+      const res = await api.find<MuseumDoc>("museums", {
+        where: { isActive: { equals: true } },
+        sort: "-isFeatured",
+        limit: 100,
+        depth: 1,
+      });
+      return res.docs;
+    },
+  });
+
+  const museums = useMemo(() => {
+    if (!data?.length) {
+      return fallbackMuseums;
+    }
+
+    return data
+      .filter((m) => m.slug && m.name)
+      .map((m, index) => {
+        const fallback = fallbackMuseums[index % fallbackMuseums.length];
+        const hero =
+          typeof m.heroImage === "string"
+            ? m.heroImage
+            : m.heroImage && typeof m.heroImage.url === "string"
+              ? m.heroImage.url
+              : null;
+        const cover = m.coverImage && m.coverImage.trim() ? m.coverImage : null;
+
+        return {
+          id: m.id,
+          slug: m.slug as string,
+          name: m.name as string,
+          subtitle: (m.shortDescription || m.description || fallback.subtitle || "").trim(),
+          hours:
+            typeof m.openingHours?.daily === "string"
+              ? m.openingHours.daily
+              : fallback.hours,
+          location: m.address || fallback.location,
+          rating: fallback.rating,
+          reviewCount: fallback.reviewCount,
+          imageUrl: hero || cover || fallback.imageUrl,
+          category: fallback.category,
+          featured: !!m.isFeatured,
+        };
+      });
+  }, [data]);
+
+  const featuredMuseum = museums.find((m) => m.featured) || museums[0];
+  const otherMuseums = museums.filter((m) => m.id !== featuredMuseum?.id);
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate("/");
+  };
+
+  const handleMuseumClick = (museumSlug: string) => {
+    if (onMuseumClick) {
+      onMuseumClick(museumSlug);
+      return;
+    }
+    navigate(`/museum-guide/${museumSlug}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,7 +171,7 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50 safe-area-pt">
         <div className="flex items-center justify-between h-14 px-4 page-content-narrow">
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="w-10 h-10 flex items-center justify-center -ml-2"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -109,6 +191,20 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
             maps, and on-site navigation
           </p>
         </div>
+
+        {isLoading && (
+          <div className="space-y-3 mb-6">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="h-20 rounded-xl bg-muted/40 animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            Could not load memorials from backend. Showing fallback content.
+          </div>
+        )}
 
         {/* Exhibition Quick Access Card */}
         <button
@@ -134,7 +230,7 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
         {/* Featured Museum */}
         {featuredMuseum && (
           <button
-            onClick={() => onMuseumClick(featuredMuseum.id)}
+            onClick={() => handleMuseumClick(featuredMuseum.slug || featuredMuseum.id)}
             className="w-full relative overflow-hidden rounded-2xl mb-6 text-left"
             style={{ boxShadow: "0px 16px 40px rgba(0,0,0,0.15)" }}
           >
@@ -181,7 +277,7 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
           {otherMuseums.map((museum) => (
             <button
               key={museum.id}
-              onClick={() => onMuseumClick(museum.id)}
+              onClick={() => handleMuseumClick(museum.slug || museum.id)}
               className="w-full flex items-center gap-3 p-3 bg-card rounded-xl text-left hover:bg-card/80 transition-colors"
             >
               <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">

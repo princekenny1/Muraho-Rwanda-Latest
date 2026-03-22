@@ -1,15 +1,33 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Filter, Grid, List } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api/client";
 
 interface ThemesHubProps {
-  onBack: () => void;
-  onThemeClick: (themeId: string) => void;
+  onBack?: () => void;
+  onThemeClick?: (themeId: string) => void;
 }
 
-const themes = [
+interface ThemeDoc {
+  id: string;
+  slug?: string;
+  name?: string;
+  description?: string;
+  color?: string;
+  icon?: string;
+}
+
+interface StoryDoc {
+  id: string;
+  themes?: Array<string | { id?: string; slug?: string }>;
+}
+
+const fallbackThemes = [
   {
-    id: "reconciliation",
+    id: "fallback-reconciliation",
+    slug: "reconciliation",
     title: "Reconciliation",
     description: "Stories of healing and unity",
     storiesCount: 24,
@@ -18,7 +36,8 @@ const themes = [
     icon: "🕊️",
   },
   {
-    id: "survival",
+    id: "fallback-survival",
+    slug: "survival",
     title: "Survival",
     description: "Testimonies of resilience",
     storiesCount: 18,
@@ -27,7 +46,8 @@ const themes = [
     icon: "🌱",
   },
   {
-    id: "rebuilding",
+    id: "fallback-rebuilding",
+    slug: "rebuilding",
     title: "Rebuilding",
     description: "A nation's transformation",
     storiesCount: 31,
@@ -36,7 +56,8 @@ const themes = [
     icon: "🏗️",
   },
   {
-    id: "culture",
+    id: "fallback-culture",
+    slug: "culture",
     title: "Culture",
     description: "Art, music, and traditions",
     storiesCount: 42,
@@ -45,7 +66,8 @@ const themes = [
     icon: "🎭",
   },
   {
-    id: "nature",
+    id: "fallback-nature",
+    slug: "nature",
     title: "Nature",
     description: "Wildlife and landscapes",
     storiesCount: 27,
@@ -54,7 +76,8 @@ const themes = [
     icon: "🦍",
   },
   {
-    id: "road-stories",
+    id: "fallback-road-stories",
+    slug: "road-stories",
     title: "Road Stories",
     description: "Tales from the journey",
     storiesCount: 15,
@@ -65,7 +88,89 @@ const themes = [
 ];
 
 export function ThemesHub({ onBack, onThemeClick }: ThemesHubProps) {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["public-themes-hub"],
+    queryFn: async () => {
+      const [themesRes, storiesRes] = await Promise.all([
+        api.find<ThemeDoc>("themes", {
+          where: { isActive: { equals: true } },
+          sort: "name",
+          limit: 100,
+        }),
+        api.find<StoryDoc>("stories", {
+          where: { status: { equals: "published" } },
+          limit: 300,
+          depth: 1,
+        }),
+      ]);
+
+      return {
+        themes: themesRes.docs,
+        stories: storiesRes.docs,
+      };
+    },
+  });
+
+  const themes = useMemo(() => {
+    if (!data?.themes?.length) {
+      return fallbackThemes;
+    }
+
+    const storiesByTheme = new Map<string, number>();
+
+    for (const story of data.stories || []) {
+      const storyThemes = Array.isArray(story.themes) ? story.themes : [];
+      for (const entry of storyThemes) {
+        const key =
+          typeof entry === "string"
+            ? entry
+            : entry?.id || entry?.slug || "";
+        if (!key) continue;
+        storiesByTheme.set(key, (storiesByTheme.get(key) || 0) + 1);
+      }
+    }
+
+    return data.themes.map((theme, index) => {
+      const slug = theme.slug || theme.id;
+      const count =
+        storiesByTheme.get(theme.id) || storiesByTheme.get(slug) || 0;
+
+      const fallback = fallbackThemes[index % fallbackThemes.length];
+      return {
+        id: theme.id,
+        slug,
+        title: theme.name || "Untitled Theme",
+        description:
+          theme.description || fallback.description,
+        storiesCount: count,
+        gradient:
+          theme.color
+            ? `linear-gradient(135deg, ${theme.color} 0%, ${theme.color}CC 100%)`
+            : fallback.gradient,
+        accentColor: theme.color || fallback.accentColor,
+        icon: theme.icon || fallback.icon,
+      };
+    });
+  }, [data]);
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate("/");
+  };
+
+  const handleThemeClick = (themeSlug: string) => {
+    if (onThemeClick) {
+      onThemeClick(themeSlug);
+      return;
+    }
+    navigate(`/themes/${themeSlug}`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,7 +178,7 @@ export function ThemesHub({ onBack, onThemeClick }: ThemesHubProps) {
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50 safe-area-pt">
         <div className="flex items-center justify-between h-14 px-4 page-content-narrow">
           <button
-            onClick={onBack}
+            onClick={handleBack}
             className="w-10 h-10 flex items-center justify-center -ml-2"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -119,13 +224,30 @@ export function ThemesHub({ onBack, onThemeClick }: ThemesHubProps) {
           </p>
         </div>
 
+        {isLoading && (
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-36 rounded-2xl bg-muted/40 animate-pulse"
+              />
+            ))}
+          </div>
+        )}
+
+        {isError && (
+          <div className="mb-6 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
+            Could not load themes from backend. Showing cached defaults.
+          </div>
+        )}
+
         {/* Grid View */}
         {viewMode === "grid" && (
           <div className="grid grid-cols-2 gap-4">
             {themes.map((theme, idx) => (
               <button
                 key={theme.id}
-                onClick={() => onThemeClick(theme.id)}
+                onClick={() => handleThemeClick(theme.slug)}
                 className="group relative overflow-hidden rounded-2xl text-left transition-all hover:scale-[1.02] active:scale-[0.98]"
                 style={{
                   minHeight: "175px",
@@ -164,7 +286,7 @@ export function ThemesHub({ onBack, onThemeClick }: ThemesHubProps) {
             {themes.map((theme) => (
               <button
                 key={theme.id}
-                onClick={() => onThemeClick(theme.id)}
+                onClick={() => handleThemeClick(theme.slug)}
                 className="w-full flex items-center gap-4 p-4 bg-card rounded-xl text-left hover:bg-card/80 transition-colors"
                 style={{
                   borderLeft: `4px solid ${theme.accentColor}`,

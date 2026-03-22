@@ -52,6 +52,7 @@ import { MuseumGuide } from "./pages/MuseumGuide";
 import { FullMap } from "./pages/FullMap";
 import { Onboarding } from "./pages/Onboarding";
 import { RoutePage } from "./pages/RoutePage";
+import { RoutesHub } from "./pages/RoutesHub";
 import { AskRwanda } from "./pages/AskRwanda";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
@@ -125,6 +126,7 @@ const App = () => (
                 <Route path="/themes" element={<ThemesHub />} />
                 <Route path="/themes/:slug" element={<ThemeDetail />} />
                 <Route path="/memorials" element={<MemorialsHub />} />
+                <Route path="/routes" element={<RoutesHub />} />
                 <Route path="/map" element={<FullMap />} />
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/routes/:slug/view" element={<RoutePage />} />

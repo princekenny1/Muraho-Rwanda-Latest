@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Clock,
@@ -23,8 +23,8 @@ import kctPost from "@/assets/KCT-Post.jpg";
 import kctPrecolonial from "@/assets/KCT-precolonial.jpg";
 
 interface MuseumGuideProps {
-  museumId: string;
-  onBack: () => void;
+  museumId?: string;
+  onBack?: () => void;
 }
 
 const mockMuseum = {
@@ -76,14 +76,26 @@ type ViewMode = "overview" | "onsite";
 
 export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const [viewMode, setViewMode] = useState<ViewMode>("overview");
   const [activeExhibition, setActiveExhibition] = useState<string | null>(null);
   const [currentPanel, setCurrentPanel] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showVirtualTour, setShowVirtualTour] = useState(false);
 
-  const museum = mockMuseum;
+  const museum = {
+    ...mockMuseum,
+    id: museumId || slug || mockMuseum.id,
+  };
   const activeEx = museum.exhibitions.find((e) => e.id === activeExhibition);
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate("/memorials");
+  };
 
   const handleExhibitionClick = (exhibitionId: string) => {
     // Navigate to the new exhibition panel page
@@ -235,7 +247,7 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
 
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="absolute top-4 left-4 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center safe-area-pt"
         >
           <ArrowLeft className="w-5 h-5 text-midnight" />

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ChevronRight,
@@ -14,9 +15,9 @@ import kctPrecolonial from "@/assets/KCT-precolonial.jpg";
 import kwaRubangura from "@/assets/kwa_rubangura.jpg";
 
 interface ThemeDetailProps {
-  themeId: string;
-  onBack: () => void;
-  onStoryClick: (storyId: string) => void;
+  themeId?: string;
+  onBack?: () => void;
+  onStoryClick?: (storyId: string) => void;
 }
 
 const themeData: Record<
@@ -126,9 +127,28 @@ export function ThemeDetail({
   onBack,
   onStoryClick,
 }: ThemeDetailProps) {
+  const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const [filter, setFilter] = useState<FilterType>("all");
 
-  const theme = themeData[themeId] || themeData.reconciliation;
+  const resolvedThemeId = themeId || slug || "reconciliation";
+  const theme = themeData[resolvedThemeId] || themeData.reconciliation;
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    navigate("/themes");
+  };
+
+  const handleStoryClick = (storyId: string) => {
+    if (onStoryClick) {
+      onStoryClick(storyId);
+      return;
+    }
+    navigate(`/stories/${storyId}`);
+  };
 
   const filteredStories =
     filter === "all"
@@ -145,7 +165,7 @@ export function ThemeDetail({
 
         {/* Back button */}
         <button
-          onClick={onBack}
+          onClick={handleBack}
           className="absolute top-4 left-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors safe-area-pt"
         >
           <ArrowLeft className="w-5 h-5 text-white" />
@@ -197,7 +217,7 @@ export function ThemeDetail({
               </span>
             </div>
             <button
-              onClick={() => onStoryClick(editorsPick.id)}
+              onClick={() => handleStoryClick(editorsPick.id)}
               className="w-full relative overflow-hidden rounded-2xl"
               style={{ boxShadow: `0 8px 32px ${theme.accentColor}30` }}
             >
@@ -244,7 +264,7 @@ export function ThemeDetail({
             return (
               <button
                 key={story.id}
-                onClick={() => onStoryClick(story.id)}
+                onClick={() => handleStoryClick(story.id)}
                 className="w-full flex items-center gap-3 p-3 bg-card rounded-xl text-left hover:bg-card/80 transition-colors"
               >
                 <img
