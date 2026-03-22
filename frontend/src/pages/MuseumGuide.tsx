@@ -81,7 +81,12 @@ const normalizeRelation = (item: string | MuseumRelation) => {
     id: item.id || "",
     slug: item.slug || "",
     title,
-    description: (item.summary || item.shortDescription || item.description || "").trim(),
+    description: (
+      item.summary ||
+      item.shortDescription ||
+      item.description ||
+      ""
+    ).trim(),
   };
 };
 
@@ -90,7 +95,11 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
   const { slug } = useParams<{ slug: string }>();
   const museumSlug = museumId || slug;
 
-  const { data: museum, isLoading, isError } = useQuery({
+  const {
+    data: museum,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["public-museum-guide", museumSlug],
     queryFn: async () => {
       const result = await api.find<MuseumDoc>("museums", {
@@ -139,8 +148,12 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
         <h1 className="text-xl font-semibold">Museum not found</h1>
-        <p className="text-muted-foreground">This museum page is unavailable right now.</p>
-        <Button onClick={() => navigate("/memorials")}>Back to Memorials</Button>
+        <p className="text-muted-foreground">
+          This museum page is unavailable right now.
+        </p>
+        <Button onClick={() => navigate("/memorials")}>
+          Back to Memorials
+        </Button>
       </div>
     );
   }
@@ -151,12 +164,19 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
       : "Check on site";
 
   const museumName = museum.name || "Untitled Museum";
-  const overview = museum.shortDescription || museum.description || "No museum overview available yet.";
+  const overview =
+    museum.shortDescription ||
+    museum.description ||
+    "No museum overview available yet.";
 
   return (
     <div className="min-h-screen bg-background">
       <div className="relative h-64">
-        <img src={imageUrl(museum)} alt={museumName} className="w-full h-full object-cover" />
+        <img
+          src={imageUrl(museum)}
+          alt={museumName}
+          className="w-full h-full object-cover"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-midnight via-midnight/50 to-transparent" />
 
         <button
@@ -167,7 +187,9 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
         </button>
 
         <div className="absolute bottom-0 left-0 right-0 p-4">
-          <h1 className="font-serif text-2xl font-semibold text-white">{museumName}</h1>
+          <h1 className="font-serif text-2xl font-semibold text-white">
+            {museumName}
+          </h1>
           <div className="flex items-center gap-4 mt-2 text-white/70 text-sm flex-wrap">
             <span className="flex items-center gap-1">
               <Clock className="w-4 h-4" />
@@ -185,11 +207,16 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
 
       <main className="px-4 py-6 page-content-narrow">
         <div className="flex gap-3 mb-4">
-          <Button size="lg" className="flex-1" onClick={() => navigate("/map")}> 
+          <Button size="lg" className="flex-1" onClick={() => navigate("/map")}>
             <Headphones className="w-5 h-5 mr-2" />
             Open Map Guide
           </Button>
-          <Button size="lg" variant="outline" className="flex-1" onClick={() => navigate("/map")}> 
+          <Button
+            size="lg"
+            variant="outline"
+            className="flex-1"
+            onClick={() => navigate("/map")}
+          >
             <View className="w-5 h-5 mr-2" />
             Explore Nearby
           </Button>
@@ -212,29 +239,44 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
         </div>
 
         <div className="mb-6 p-4 bg-muted-indigo/5 rounded-xl border-l-4 border-muted-indigo">
-          <h3 className="font-medium text-foreground text-sm mb-2">Visitor Guidance</h3>
+          <h3 className="font-medium text-foreground text-sm mb-2">
+            Visitor Guidance
+          </h3>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            {museum.visitorGuidance || museum.safetyNotice || museum.etiquette || "Visitor guidance will be available soon."}
+            {museum.visitorGuidance ||
+              museum.safetyNotice ||
+              museum.etiquette ||
+              "Visitor guidance will be available soon."}
           </p>
         </div>
 
         <div className="mb-6">
-          <h2 className="font-semibold text-foreground mb-3">Related Stories</h2>
+          <h2 className="font-semibold text-foreground mb-3">
+            Related Stories
+          </h2>
           {relatedStories.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No linked stories yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No linked stories yet.
+            </p>
           ) : (
             <div className="space-y-3">
               {relatedStories.map((story) => (
                 <button
                   key={story.id || story.slug || story.title}
-                  onClick={() => story.slug && navigate(`/stories/${story.slug}`)}
+                  onClick={() =>
+                    story.slug && navigate(`/stories/${story.slug}`)
+                  }
                   className="w-full flex items-center justify-between p-3 bg-card rounded-xl text-left hover:bg-card/80 transition-colors"
                   disabled={!story.slug}
                 >
                   <div>
-                    <h4 className="font-medium text-foreground text-sm">{story.title}</h4>
+                    <h4 className="font-medium text-foreground text-sm">
+                      {story.title}
+                    </h4>
                     {story.description && (
-                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{story.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        {story.description}
+                      </p>
                     )}
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground flex-shrink-0" />
@@ -247,22 +289,30 @@ export function MuseumGuide({ museumId, onBack }: MuseumGuideProps) {
         <div>
           <h2 className="font-semibold text-foreground mb-3">Related Routes</h2>
           {relatedRoutes.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No linked routes yet.</p>
+            <p className="text-sm text-muted-foreground">
+              No linked routes yet.
+            </p>
           ) : (
             <div className="space-y-3">
               {relatedRoutes.map((route) => (
                 <button
                   key={route.id || route.slug || route.title}
-                  onClick={() => route.slug && navigate(`/routes/${route.slug}`)}
+                  onClick={() =>
+                    route.slug && navigate(`/routes/${route.slug}`)
+                  }
                   className="w-full flex items-center justify-between p-3 bg-card rounded-xl text-left hover:bg-card/80 transition-colors"
                   disabled={!route.slug}
                 >
                   <div className="flex items-center gap-2">
                     <Route className="w-4 h-4 text-muted-foreground" />
                     <div>
-                      <h4 className="font-medium text-foreground text-sm">{route.title}</h4>
+                      <h4 className="font-medium text-foreground text-sm">
+                        {route.title}
+                      </h4>
                       {route.description && (
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{route.description}</p>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {route.description}
+                        </p>
                       )}
                     </div>
                   </div>

@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Play, MapPin, Clock, ChevronRight, AlertTriangle } from "lucide-react";
+import {
+  ArrowLeft,
+  Play,
+  MapPin,
+  Clock,
+  ChevronRight,
+  AlertTriangle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api/client";
@@ -43,17 +50,32 @@ export default function RouteViewer() {
 
       const normalizedRoute: Route = {
         id: String((routeData as any).id || ""),
-        title: (routeData as any).title || (routeData as any).name || "Untitled Route",
+        title:
+          (routeData as any).title ||
+          (routeData as any).name ||
+          "Untitled Route",
         slug: (routeData as any).slug || "",
-        description: (routeData as any).description || (routeData as any).shortDescription || null,
+        description:
+          (routeData as any).description ||
+          (routeData as any).shortDescription ||
+          null,
         cover_image:
           typeof (routeData as any).heroImage === "string"
             ? (routeData as any).heroImage
-            : (routeData as any).heroImage?.url || (routeData as any).coverImage || null,
-        duration_minutes: (routeData as any).durationMinutes || (routeData as any).duration_minutes || null,
+            : (routeData as any).heroImage?.url ||
+              (routeData as any).coverImage ||
+              null,
+        duration_minutes:
+          (routeData as any).durationMinutes ||
+          (routeData as any).duration_minutes ||
+          null,
         estimated_hours: (routeData as any).estimatedHours || null,
-        difficulty: ((routeData as any).difficulty || "moderate") as Route["difficulty"],
-        distance_km: (routeData as any).distanceKm || (routeData as any).distance_km || null,
+        difficulty: ((routeData as any).difficulty ||
+          "moderate") as Route["difficulty"],
+        distance_km:
+          (routeData as any).distanceKm ||
+          (routeData as any).distance_km ||
+          null,
         transport_mode: (routeData as any).transportMode || null,
         access_level: "free",
         category: null,
@@ -82,7 +104,8 @@ export default function RouteViewer() {
         latitude: stop.latitude || 0,
         longitude: stop.longitude || 0,
         stop_order: stop.stopOrder || stop.orderIndex || 1,
-        estimated_time_minutes: stop.estimatedTimeMinutes || stop.estimated_time_minutes || 15,
+        estimated_time_minutes:
+          stop.estimatedTimeMinutes || stop.estimated_time_minutes || 15,
         autoplay_on_arrival: !!stop.autoplayOnArrival,
         marker_color: stop.markerColor || "#F97316",
         marker_icon: stop.markerIcon || "location",
@@ -128,10 +151,14 @@ export default function RouteViewer() {
 
   const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty) {
-      case "easy": return "Easy";
-      case "moderate": return "Moderate";
-      case "challenging": return "Challenging";
-      default: return difficulty;
+      case "easy":
+        return "Easy";
+      case "moderate":
+        return "Moderate";
+      case "challenging":
+        return "Challenging";
+      default:
+        return difficulty;
     }
   };
 
@@ -166,7 +193,7 @@ export default function RouteViewer() {
           {route.description && (
             <p className="text-white/80 text-sm mb-4">{route.description}</p>
           )}
-          
+
           <div className="flex items-center gap-4 text-white/70 text-sm flex-wrap">
             {route.duration_minutes && (
               <div className="flex items-center gap-1.5">
@@ -212,14 +239,19 @@ export default function RouteViewer() {
                     "relative z-10 w-4 h-4 rounded-full transition-all",
                     activeStop?.id === stop.id
                       ? "w-5 h-5 bg-amber ring-4 ring-amber/30"
-                      : themeColors[stop.marker_icon] || "bg-amber"
+                      : themeColors[stop.marker_icon] || "bg-amber",
                   )}
-                  style={{ backgroundColor: activeStop?.id === stop.id ? undefined : stop.marker_color }}
+                  style={{
+                    backgroundColor:
+                      activeStop?.id === stop.id
+                        ? undefined
+                        : stop.marker_color,
+                  }}
                 />
               ))}
             </div>
-            
-            <button 
+
+            <button
               onClick={() => navigate(`/map?route=${route.slug}`)}
               className="flex items-center justify-center gap-2 w-full mt-4 text-amber text-sm font-medium hover:text-amber/80 transition-colors"
             >
@@ -235,7 +267,7 @@ export default function RouteViewer() {
         <h2 className="font-serif text-lg font-semibold text-foreground mb-4">
           Route Stops
         </h2>
-        
+
         {stops.length === 0 ? (
           <p className="text-muted-foreground text-center py-8">
             No stops added to this route yet.
@@ -249,11 +281,11 @@ export default function RouteViewer() {
                 className={cn(
                   "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
                   "bg-muted/30 hover:bg-muted/50",
-                  activeStop?.id === stop.id && "ring-2 ring-amber bg-amber/10"
+                  activeStop?.id === stop.id && "ring-2 ring-amber bg-amber/10",
                 )}
               >
                 {/* Stop number */}
-                <div 
+                <div
                   className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white font-bold"
                   style={{ backgroundColor: stop.marker_color }}
                 >
@@ -287,16 +319,22 @@ export default function RouteViewer() {
 
       {/* Stop Detail Sheet - Could be expanded */}
       {activeStop && (
-        <StopDetailSheet 
+        <StopDetailSheet
           stop={activeStop}
-          onClose={() => setActiveStop(null)} 
+          onClose={() => setActiveStop(null)}
         />
       )}
     </div>
   );
 }
 
-function StopDetailSheet({ stop, onClose }: { stop: RouteStop; onClose: () => void }) {
+function StopDetailSheet({
+  stop,
+  onClose,
+}: {
+  stop: RouteStop;
+  onClose: () => void;
+}) {
   const [blocks, setBlocks] = useState<StopContentBlock[]>([]);
 
   useEffect(() => {
@@ -320,18 +358,17 @@ function StopDetailSheet({ stop, onClose }: { stop: RouteStop; onClose: () => vo
     <div className="fixed inset-x-0 bottom-0 bg-background border-t rounded-t-3xl shadow-xl max-h-[60vh] overflow-y-auto animate-in slide-in-from-bottom sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:max-w-2xl sm:w-full">
       <div className="p-4">
         <div className="w-12 h-1 bg-muted rounded-full mx-auto mb-4" />
-        
+
         <div className="flex items-start justify-between mb-4">
           <div>
             <h3 className="font-serif text-xl font-semibold">{stop.title}</h3>
             {stop.description && (
-              <p className="text-muted-foreground text-sm mt-1">{stop.description}</p>
+              <p className="text-muted-foreground text-sm mt-1">
+                {stop.description}
+              </p>
             )}
           </div>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-muted rounded-full"
-          >
+          <button onClick={onClose} className="p-2 hover:bg-muted rounded-full">
             <ArrowLeft className="w-5 h-5" />
           </button>
         </div>
@@ -388,18 +425,21 @@ function ContentBlockRenderer({ block }: { block: StopContentBlock }) {
       );
 
     case "image":
-      const images = (content.images as { url: string; caption?: string }[]) || [];
+      const images =
+        (content.images as { url: string; caption?: string }[]) || [];
       return (
         <div className="space-y-2">
           {images.map((img, idx) => (
             <div key={idx}>
-              <img 
-                src={img.url} 
-                alt={img.caption || "Stop image"} 
+              <img
+                src={img.url}
+                alt={img.caption || "Stop image"}
                 className="rounded-xl w-full"
               />
               {img.caption && (
-                <p className="text-xs text-muted-foreground mt-1">{img.caption}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {img.caption}
+                </p>
               )}
             </div>
           ))}
@@ -409,15 +449,17 @@ function ContentBlockRenderer({ block }: { block: StopContentBlock }) {
     case "video":
       return (
         <div className="rounded-xl overflow-hidden media-container">
-          <video 
-            src={content.url as string} 
-            controls 
+          <video
+            src={content.url as string}
+            controls
             className="w-full aspect-video"
             poster={content.thumbnail as string}
             playsInline
           />
           {content.caption && (
-            <p className="text-xs text-muted-foreground mt-1">{content.caption as string}</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              {content.caption as string}
+            </p>
           )}
         </div>
       );
@@ -425,8 +467,14 @@ function ContentBlockRenderer({ block }: { block: StopContentBlock }) {
     case "audio":
       return (
         <div className="bg-muted/50 rounded-xl p-4">
-          <p className="font-medium text-sm mb-2">{content.title as string || "Audio"}</p>
-          <audio src={content.url as string} controls className="w-full max-w-full" />
+          <p className="font-medium text-sm mb-2">
+            {(content.title as string) || "Audio"}
+          </p>
+          <audio
+            src={content.url as string}
+            controls
+            className="w-full max-w-full"
+          />
           {content.transcript && (
             <details className="mt-2">
               <summary className="text-xs text-muted-foreground cursor-pointer">

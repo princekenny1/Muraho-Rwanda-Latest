@@ -142,7 +142,9 @@ export function ThemesHub({ onBack, onThemeClick }: ThemesHubProps) {
     return data.themes.map((theme, index) => {
       const slug = theme.slug || theme.id;
       const count =
-        storiesByTheme.get(String(theme.id)) || storiesByTheme.get(String(slug)) || 0;
+        storiesByTheme.get(String(theme.id)) ||
+        storiesByTheme.get(String(slug)) ||
+        0;
 
       const fallback = fallbackThemes[index % fallbackThemes.length];
       return {

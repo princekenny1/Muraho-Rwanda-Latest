@@ -28,14 +28,20 @@ interface StoryDoc {
   heroImage?: string | { url?: string };
   status?: string;
   themes?: Array<string | { id?: string; name?: string; slug?: string }>;
-  location?: string | { id?: string; slug?: string; name?: string; locationType?: string };
+  location?:
+    | string
+    | { id?: string; slug?: string; name?: string; locationType?: string };
 }
 
 const getHeroImage = (story: StoryDoc): string => {
   if (typeof story.heroImage === "string" && story.heroImage.trim()) {
     return story.heroImage;
   }
-  if (story.heroImage && typeof story.heroImage === "object" && story.heroImage.url) {
+  if (
+    story.heroImage &&
+    typeof story.heroImage === "object" &&
+    story.heroImage.url
+  ) {
     return story.heroImage.url;
   }
   return coverImg;
@@ -48,7 +54,11 @@ export function StoryDetail({ onBack }: StoryDetailProps) {
   const [showTranscript, setShowTranscript] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
 
-  const { data: story, isLoading, isError } = useQuery({
+  const {
+    data: story,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ["public-story-detail", slug],
     queryFn: async () => {
       const result = await api.find<StoryDoc>("stories", {
@@ -98,7 +108,9 @@ export function StoryDetail({ onBack }: StoryDetailProps) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6 text-center">
         <h1 className="text-xl font-semibold">Story not found</h1>
-        <p className="text-muted-foreground">This story is unavailable or not published yet.</p>
+        <p className="text-muted-foreground">
+          This story is unavailable or not published yet.
+        </p>
         <Button onClick={() => navigate("/")}>Go Home</Button>
       </div>
     );
@@ -207,16 +219,21 @@ export function StoryDetail({ onBack }: StoryDetailProps) {
           </div>
 
           {/* Sources */}
-            <div className="mt-6">
-              <h3 className="text-sm font-medium text-midnight mb-3">Sources</h3>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-violet text-white text-xs font-medium rounded-full">
-                Muraho Content API
-                <ExternalLink className="w-3 h-3" />
-              </div>
+          <div className="mt-6">
+            <h3 className="text-sm font-medium text-midnight mb-3">Sources</h3>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-violet text-white text-xs font-medium rounded-full">
+              Muraho Content API
+              <ExternalLink className="w-3 h-3" />
             </div>
+          </div>
 
           {/* CTA */}
-            <Button className="w-full mt-8" size="lg" variant="museum" onClick={handleMuseumMode}>
+          <Button
+            className="w-full mt-8"
+            size="lg"
+            variant="museum"
+            onClick={handleMuseumMode}
+          >
             Open Museum Mode
           </Button>
         </div>
