@@ -131,7 +131,12 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
           id: m.id,
           slug: m.slug as string,
           name: m.name as string,
-          subtitle: (m.shortDescription || m.description || fallback.subtitle || "").trim(),
+          subtitle: (
+            m.shortDescription ||
+            m.description ||
+            fallback.subtitle ||
+            ""
+          ).trim(),
           hours:
             typeof m.openingHours?.daily === "string"
               ? m.openingHours.daily
@@ -195,7 +200,10 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
         {isLoading && (
           <div className="space-y-3 mb-6">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-xl bg-muted/40 animate-pulse" />
+              <div
+                key={i}
+                className="h-20 rounded-xl bg-muted/40 animate-pulse"
+              />
             ))}
           </div>
         )}
@@ -230,7 +238,9 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
         {/* Featured Museum */}
         {featuredMuseum && (
           <button
-            onClick={() => handleMuseumClick(featuredMuseum.slug || featuredMuseum.id)}
+            onClick={() =>
+              handleMuseumClick(featuredMuseum.slug || featuredMuseum.id)
+            }
             className="w-full relative overflow-hidden rounded-2xl mb-6 text-left"
             style={{ boxShadow: "0px 16px 40px rgba(0,0,0,0.15)" }}
           >

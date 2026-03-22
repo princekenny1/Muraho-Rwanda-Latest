@@ -4,6 +4,7 @@ import { ArrowLeft, Play, MapPin, Clock, ChevronRight, AlertTriangle } from "luc
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api/client";
+import { useToast } from "@/hooks/use-toast";
 import type { Route, RouteStop, StopContentBlock } from "@/types/routes";
 
 const themeColors: Record<string, string> = {
@@ -19,10 +20,11 @@ const themeColors: Record<string, string> = {
 export default function RouteViewer() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [route, setRoute] = useState<Route | null>(null);
   const [stops, setStops] = useState<RouteStop[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeStopId, setActiveStopId] = useState<string | null>(null);
+  const [activeStop, setActiveStop] = useState<RouteStop | null>(null);
 
   useEffect(() => {
     const fetchRoute = async () => {
@@ -39,7 +41,31 @@ export default function RouteViewer() {
         return;
       }
 
-      setRoute(routeData as Route);
+      const normalizedRoute: Route = {
+        id: String((routeData as any).id || ""),
+        title: (routeData as any).title || (routeData as any).name || "Untitled Route",
+        slug: (routeData as any).slug || "",
+        description: (routeData as any).description || (routeData as any).shortDescription || null,
+        cover_image:
+          typeof (routeData as any).heroImage === "string"
+            ? (routeData as any).heroImage
+            : (routeData as any).heroImage?.url || (routeData as any).coverImage || null,
+        duration_minutes: (routeData as any).durationMinutes || (routeData as any).duration_minutes || null,
+        estimated_hours: (routeData as any).estimatedHours || null,
+        difficulty: ((routeData as any).difficulty || "moderate") as Route["difficulty"],
+        distance_km: (routeData as any).distanceKm || (routeData as any).distance_km || null,
+        transport_mode: (routeData as any).transportMode || null,
+        access_level: "free",
+        category: null,
+        sensitivity_level: null,
+        offline_available: false,
+        status: ((routeData as any).status || "draft") as Route["status"],
+        created_by: null,
+        published_at: (routeData as any).publishedAt || null,
+        stops: [],
+      };
+
+      setRoute(normalizedRoute);
 
       const stopsRes = await api.find("route-stops", {
         where: { route: { equals: (routeData as any).id } },
@@ -48,7 +74,24 @@ export default function RouteViewer() {
       });
       const stopsData = stopsRes.docs;
 
-      setStops((stopsData || []) as RouteStop[]);
+      const normalizedStops = (stopsData || []).map((stop: any) => ({
+        id: String(stop.id),
+        route_id: String(stop.route || normalizedRoute.id),
+        title: stop.title || stop.name || "Stop",
+        description: stop.description || null,
+        latitude: stop.latitude || 0,
+        longitude: stop.longitude || 0,
+        stop_order: stop.stopOrder || stop.orderIndex || 1,
+        estimated_time_minutes: stop.estimatedTimeMinutes || stop.estimated_time_minutes || 15,
+        autoplay_on_arrival: !!stop.autoplayOnArrival,
+        marker_color: stop.markerColor || "#F97316",
+        marker_icon: stop.markerIcon || "location",
+        linked_story_id: null,
+        linked_testimony_id: null,
+        content_blocks: [],
+      })) as RouteStop[];
+
+      setStops(normalizedStops);
       setLoading(false);
     };
 
@@ -73,8 +116,14 @@ export default function RouteViewer() {
 
   const handleStartRoute = () => {
     if (stops.length > 0) {
-      setActiveStopId(stops[0].id);
+      setActiveStop(stops[0]);
+      return;
     }
+
+    toast({
+      title: "No stops yet",
+      description: "This route has no stops configured yet.",
+    });
   };
 
   const getDifficultyLabel = (difficulty: string) => {
@@ -146,7 +195,7 @@ export default function RouteViewer() {
       <div className="px-4 -mt-6 relative z-10">
         <Button size="lg" className="w-full" onClick={handleStartRoute}>
           <Play className="w-5 h-5 mr-2" />
-          Start Route
+          {stops.length > 0 ? "Start Route" : "Start Route (No Stops Yet)"}
         </Button>
       </div>
 
@@ -161,11 +210,11 @@ export default function RouteViewer() {
                   key={stop.id}
                   className={cn(
                     "relative z-10 w-4 h-4 rounded-full transition-all",
-                    activeStopId === stop.id
+                    activeStop?.id === stop.id
                       ? "w-5 h-5 bg-amber ring-4 ring-amber/30"
                       : themeColors[stop.marker_icon] || "bg-amber"
                   )}
-                  style={{ backgroundColor: activeStopId === stop.id ? undefined : stop.marker_color }}
+                  style={{ backgroundColor: activeStop?.id === stop.id ? undefined : stop.marker_color }}
                 />
               ))}
             </div>
@@ -196,11 +245,11 @@ export default function RouteViewer() {
             {stops.map((stop, idx) => (
               <button
                 key={stop.id}
-                onClick={() => setActiveStopId(stop.id)}
+                onClick={() => setActiveStop(stop)}
                 className={cn(
                   "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
                   "bg-muted/30 hover:bg-muted/50",
-                  activeStopId === stop.id && "ring-2 ring-amber bg-amber/10"
+                  activeStop?.id === stop.id && "ring-2 ring-amber bg-amber/10"
                 )}
               >
                 {/* Stop number */}
@@ -237,41 +286,35 @@ export default function RouteViewer() {
       </div>
 
       {/* Stop Detail Sheet - Could be expanded */}
-      {activeStopId && (
+      {activeStop && (
         <StopDetailSheet 
-          stopId={activeStopId} 
-          onClose={() => setActiveStopId(null)} 
+          stop={activeStop}
+          onClose={() => setActiveStop(null)} 
         />
       )}
     </div>
   );
 }
 
-function StopDetailSheet({ stopId, onClose }: { stopId: string; onClose: () => void }) {
-  const [stop, setStop] = useState<RouteStop | null>(null);
+function StopDetailSheet({ stop, onClose }: { stop: RouteStop; onClose: () => void }) {
   const [blocks, setBlocks] = useState<StopContentBlock[]>([]);
 
   useEffect(() => {
-    const fetchStopDetails = async () => {
-      const stopData = await api.findById("route-stops", stopId);
-
-      if (stopData) {
-        setStop(stopData as RouteStop);
+    const fetchBlocks = async () => {
+      try {
+        const blocksRes = await api.find("stop-content-blocks", {
+          where: { stop: { equals: stop.id } },
+          sort: "blockOrder",
+          limit: 100,
+        });
+        setBlocks((blocksRes.docs || []) as unknown as StopContentBlock[]);
+      } catch {
+        setBlocks([]);
       }
-
-      const blocksRes = await api.find("stop-content-blocks", {
-        where: { stop: { equals: stopId } },
-        sort: "blockOrder",
-        limit: 100,
-      });
-
-      setBlocks((blocksRes.docs || []) as unknown as StopContentBlock[]);
     };
 
-    fetchStopDetails();
-  }, [stopId]);
-
-  if (!stop) return null;
+    fetchBlocks();
+  }, [stop.id]);
 
   return (
     <div className="fixed inset-x-0 bottom-0 bg-background border-t rounded-t-3xl shadow-xl max-h-[60vh] overflow-y-auto animate-in slide-in-from-bottom sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2 sm:max-w-2xl sm:w-full">

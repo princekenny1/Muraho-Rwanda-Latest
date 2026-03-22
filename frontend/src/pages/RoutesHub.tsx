@@ -1,7 +1,13 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ChevronRight, Clock, MapPin, Route as RouteIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronRight,
+  Clock,
+  MapPin,
+  Route as RouteIcon,
+} from "lucide-react";
 import { api } from "@/lib/api/client";
 
 interface RouteDoc {
@@ -74,18 +80,20 @@ export function RoutesHub() {
 
   const routes = useMemo(
     () =>
-      (data || []).filter((r) => r.slug && (r.title || r.name)).map((r) => ({
-        id: r.id,
-        slug: r.slug as string,
-        title: (r.title || r.name || "Untitled Route").trim(),
-        description: (r.description || r.shortDescription || "").trim(),
-        durationLabel: toDurationLabel(r),
-        distanceKm:
-          typeof r.distanceKm === "number" && r.distanceKm > 0
-            ? `${r.distanceKm} km`
-            : null,
-        imageUrl: getImageUrl(r),
-      })),
+      (data || [])
+        .filter((r) => r.slug && (r.title || r.name))
+        .map((r) => ({
+          id: r.id,
+          slug: r.slug as string,
+          title: (r.title || r.name || "Untitled Route").trim(),
+          description: (r.description || r.shortDescription || "").trim(),
+          durationLabel: toDurationLabel(r),
+          distanceKm:
+            typeof r.distanceKm === "number" && r.distanceKm > 0
+              ? `${r.distanceKm} km`
+              : null,
+          imageUrl: getImageUrl(r),
+        })),
     [data],
   );
 
@@ -129,7 +137,8 @@ export function RoutesHub() {
 
         {isError && (
           <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">
-            We could not load routes from the backend right now. Please try again.
+            We could not load routes from the backend right now. Please try
+            again.
           </div>
         )}
 

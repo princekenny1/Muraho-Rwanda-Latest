@@ -69,7 +69,9 @@ interface PayloadRouteStop {
   markerColor?: string;
   markerIcon?: string;
   contentBlocks?: PayloadContentBlock[];
-  location?: { id: string; coordinates?: { latitude: number; longitude: number } } | string;
+  location?:
+    | { id: string; coordinates?: { latitude: number; longitude: number } }
+    | string;
 }
 
 // ── Mappers ──────────────────────────────────────────────
@@ -92,7 +94,9 @@ function mapRoute(doc: PayloadRoute): Route {
     slug: doc.slug,
     description: doc.description,
     cover_image: heroImg,
-    duration_minutes: doc.estimatedHours ? Math.round(doc.estimatedHours * 60) : null,
+    duration_minutes: doc.estimatedHours
+      ? Math.round(doc.estimatedHours * 60)
+      : null,
     estimated_hours: doc.estimatedHours,
     difficulty: doc.difficulty as Route["difficulty"],
     distance_km: doc.distanceKm,
@@ -139,12 +143,14 @@ function mapStop(doc: PayloadRouteStop, routeId: string): RouteStop {
     autoplay_on_arrival: doc.autoplayOnArrival ?? false,
     marker_color: doc.markerColor ?? "#F97316",
     marker_icon: (doc.markerIcon ?? "location") as StopMarkerIcon,
-    linked_story_id: typeof (doc as any).linkedStory === "object"
-      ? (doc as any).linkedStory?.id
-      : (doc as any).linkedStory ?? null,
-    linked_testimony_id: typeof (doc as any).linkedTestimony === "object"
-      ? (doc as any).linkedTestimony?.id
-      : (doc as any).linkedTestimony ?? null,
+    linked_story_id:
+      typeof (doc as any).linkedStory === "object"
+        ? (doc as any).linkedStory?.id
+        : ((doc as any).linkedStory ?? null),
+    linked_testimony_id:
+      typeof (doc as any).linkedTestimony === "object"
+        ? (doc as any).linkedTestimony?.id
+        : ((doc as any).linkedTestimony ?? null),
     content_blocks: blocks,
   };
 }
@@ -155,7 +161,11 @@ export function useRoutes() {
   return useQuery({
     queryKey: ["routes"],
     queryFn: async () => {
-      const res = await api.find("routes", { depth: 2, limit: 100, sort: "title" });
+      const res = await api.find("routes", {
+        depth: 2,
+        limit: 100,
+        sort: "title",
+      });
       return (res.docs as PayloadRoute[]).map(mapRoute);
     },
   });
@@ -165,7 +175,9 @@ export function useRoute(routeId?: string) {
   return useQuery({
     queryKey: ["route", routeId],
     queryFn: async () => {
-      const doc = (await api.findById("routes", routeId!, { depth: 2 })) as PayloadRoute;
+      const doc = (await api.findById("routes", routeId!, {
+        depth: 2,
+      })) as PayloadRoute;
       return mapRoute(doc);
     },
     enabled: !!routeId,
@@ -213,7 +225,8 @@ export function useRouteMutations() {
       const payload: Record<string, unknown> = {};
       if (data.title !== undefined) payload.title = data.title;
       if (data.slug !== undefined) payload.slug = data.slug;
-      if (data.description !== undefined) payload.description = data.description;
+      if (data.description !== undefined)
+        payload.description = data.description;
       if (data.cover_image !== undefined) payload.heroImage = data.cover_image;
       return api.update("routes", id, payload);
     },
@@ -240,7 +253,9 @@ export function useRouteStops(routeId?: string) {
     queryKey: ["route-stops", routeId],
     queryFn: async () => {
       // Fetch route with populated stops
-      const doc = (await api.findById("routes", routeId!, { depth: 2 })) as PayloadRoute;
+      const doc = (await api.findById("routes", routeId!, {
+        depth: 2,
+      })) as PayloadRoute;
       const stops = (doc.stops || [])
         .filter((s): s is PayloadRouteStop => typeof s === "object")
         .map((s) => mapStop(s, routeId!))
@@ -281,9 +296,11 @@ export function useRouteStopMutations() {
       });
 
       // 2. Add stop to route's stops array
-      const route = (await api.findById("routes", data.route_id, { depth: 0 })) as PayloadRoute;
+      const route = (await api.findById("routes", data.route_id, {
+        depth: 0,
+      })) as PayloadRoute;
       const existingStopIds = (route.stops || []).map((s) =>
-        typeof s === "string" ? s : s.id
+        typeof s === "string" ? s : s.id,
       );
       await api.update("routes", data.route_id, {
         stops: [...existingStopIds, stopDoc.id],
@@ -315,13 +332,17 @@ export function useRouteStopMutations() {
     }) => {
       const payload: Record<string, unknown> = {};
       if (data.title !== undefined) payload.name = data.title;
-      if (data.description !== undefined) payload.description = data.description;
+      if (data.description !== undefined)
+        payload.description = data.description;
       if (data.latitude !== undefined) payload.latitude = data.latitude;
       if (data.longitude !== undefined) payload.longitude = data.longitude;
       if (data.stop_order !== undefined) payload.orderIndex = data.stop_order;
-      if (data.estimated_time_minutes !== undefined) payload.estimatedMinutes = data.estimated_time_minutes;
-      if (data.autoplay_on_arrival !== undefined) payload.autoplayOnArrival = data.autoplay_on_arrival;
-      if (data.marker_color !== undefined) payload.markerColor = data.marker_color;
+      if (data.estimated_time_minutes !== undefined)
+        payload.estimatedMinutes = data.estimated_time_minutes;
+      if (data.autoplay_on_arrival !== undefined)
+        payload.autoplayOnArrival = data.autoplay_on_arrival;
+      if (data.marker_color !== undefined)
+        payload.markerColor = data.marker_color;
       if (data.marker_icon !== undefined) payload.markerIcon = data.marker_icon;
       return api.update("route-stops", id, payload);
     },
@@ -334,7 +355,9 @@ export function useRouteStopMutations() {
   const deleteStop = useMutation({
     mutationFn: async ({ id, routeId }: { id: string; routeId: string }) => {
       // Remove from route relationship
-      const route = (await api.findById("routes", routeId, { depth: 0 })) as PayloadRoute;
+      const route = (await api.findById("routes", routeId, {
+        depth: 0,
+      })) as PayloadRoute;
       const remaining = (route.stops || [])
         .map((s) => (typeof s === "string" ? s : s.id))
         .filter((sid) => sid !== id);
@@ -359,7 +382,7 @@ export function useRouteStopMutations() {
     }) => {
       // Update orderIndex on each stop and update route relationship order
       const updatePromises = stops.map((s, index) =>
-        api.update("route-stops", s.id, { orderIndex: index + 1 })
+        api.update("route-stops", s.id, { orderIndex: index + 1 }),
       );
       await Promise.all(updatePromises);
 
@@ -407,7 +430,9 @@ export function useStopContentBlocks(stopId: string) {
   const { data: blocks = [], isLoading: loading } = useQuery({
     queryKey: ["stop-content-blocks", stopId],
     queryFn: async () => {
-      const doc = (await api.findById("route-stops", stopId, { depth: 0 })) as PayloadRouteStop;
+      const doc = (await api.findById("route-stops", stopId, {
+        depth: 0,
+      })) as PayloadRouteStop;
       return (doc.contentBlocks || [])
         .map((b) => ({
           id: b.id,
@@ -422,12 +447,19 @@ export function useStopContentBlocks(stopId: string) {
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["stop-content-blocks", stopId] });
+    queryClient.invalidateQueries({
+      queryKey: ["stop-content-blocks", stopId],
+    });
     queryClient.invalidateQueries({ queryKey: ["route-stops"] });
   };
 
-  const createBlock = async (type: ContentBlockType, content: ContentBlockData) => {
-    const doc = (await api.findById("route-stops", stopId, { depth: 0 })) as PayloadRouteStop;
+  const createBlock = async (
+    type: ContentBlockType,
+    content: ContentBlockData,
+  ) => {
+    const doc = (await api.findById("route-stops", stopId, {
+      depth: 0,
+    })) as PayloadRouteStop;
     const existing = doc.contentBlocks || [];
     const newBlock: PayloadContentBlock = {
       id: crypto.randomUUID(),
@@ -442,16 +474,22 @@ export function useStopContentBlocks(stopId: string) {
   };
 
   const updateBlock = async (blockId: string, content: ContentBlockData) => {
-    const doc = (await api.findById("route-stops", stopId, { depth: 0 })) as PayloadRouteStop;
+    const doc = (await api.findById("route-stops", stopId, {
+      depth: 0,
+    })) as PayloadRouteStop;
     const updated = (doc.contentBlocks || []).map((b) =>
-      b.id === blockId ? { ...b, content: content as Record<string, unknown> } : b
+      b.id === blockId
+        ? { ...b, content: content as Record<string, unknown> }
+        : b,
     );
     await api.update("route-stops", stopId, { contentBlocks: updated });
     invalidate();
   };
 
   const deleteBlock = async (blockId: string) => {
-    const doc = (await api.findById("route-stops", stopId, { depth: 0 })) as PayloadRouteStop;
+    const doc = (await api.findById("route-stops", stopId, {
+      depth: 0,
+    })) as PayloadRouteStop;
     const filtered = (doc.contentBlocks || []).filter((b) => b.id !== blockId);
     // Re-index blockOrder
     const reindexed = filtered.map((b, i) => ({ ...b, blockOrder: i + 1 }));
@@ -470,7 +508,14 @@ export function useStopContentBlocks(stopId: string) {
     invalidate();
   };
 
-  return { blocks, loading, createBlock, updateBlock, deleteBlock, reorderBlocks };
+  return {
+    blocks,
+    loading,
+    createBlock,
+    updateBlock,
+    deleteBlock,
+    reorderBlocks,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -482,28 +527,42 @@ import { useCallback } from "react";
 
 export function useRouteAdmin() {
   const { data: routes = [], isLoading: loading } = useRoutes();
-  const { createRoute: createMut, updateRoute: updateMut, deleteRoute: deleteMut } = useRouteMutations();
+  const {
+    createRoute: createMut,
+    updateRoute: updateMut,
+    deleteRoute: deleteMut,
+  } = useRouteMutations();
   const queryClient = useQueryClient();
 
   const createRoute = useCallback(
-    async (data: { title: string; slug: string; description?: string; cover_image?: string }) => {
+    async (data: {
+      title: string;
+      slug: string;
+      description?: string;
+      cover_image?: string;
+    }) => {
       return createMut.mutateAsync(data);
     },
-    [createMut]
+    [createMut],
   );
 
   const updateRoute = useCallback(
-    async (data: { id: string; title?: string; description?: string; cover_image?: string }) => {
+    async (data: {
+      id: string;
+      title?: string;
+      description?: string;
+      cover_image?: string;
+    }) => {
       return updateMut.mutateAsync(data);
     },
-    [updateMut]
+    [updateMut],
   );
 
   const deleteRoute = useCallback(
     async (id: string) => {
       return deleteMut.mutateAsync(id);
     },
-    [deleteMut]
+    [deleteMut],
   );
 
   const publishRoute = useCallback(
@@ -515,7 +574,7 @@ export function useRouteAdmin() {
       queryClient.invalidateQueries({ queryKey: ["routes"] });
       queryClient.invalidateQueries({ queryKey: ["route", id] });
     },
-    [queryClient]
+    [queryClient],
   );
 
   const unpublishRoute = useCallback(
@@ -527,7 +586,7 @@ export function useRouteAdmin() {
       queryClient.invalidateQueries({ queryKey: ["routes"] });
       queryClient.invalidateQueries({ queryKey: ["route", id] });
     },
-    [queryClient]
+    [queryClient],
   );
 
   return {

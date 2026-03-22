@@ -21,7 +21,7 @@ interface ThemeDoc {
 
 interface StoryDoc {
   id: string;
-  themes?: Array<string | { id?: string; slug?: string }>;
+  themes?: Array<string | number | { id?: string | number; slug?: string }>;
 }
 
 const fallbackThemes = [
@@ -127,29 +127,33 @@ export function ThemesHub({ onBack, onThemeClick }: ThemesHubProps) {
         const key =
           typeof entry === "string"
             ? entry
-            : entry?.id || entry?.slug || "";
+            : typeof entry === "number"
+              ? String(entry)
+              : entry?.id || entry?.slug || "";
         if (!key) continue;
-        storiesByTheme.set(key, (storiesByTheme.get(key) || 0) + 1);
+        const normalizedKey = String(key);
+        storiesByTheme.set(
+          normalizedKey,
+          (storiesByTheme.get(normalizedKey) || 0) + 1,
+        );
       }
     }
 
     return data.themes.map((theme, index) => {
       const slug = theme.slug || theme.id;
       const count =
-        storiesByTheme.get(theme.id) || storiesByTheme.get(slug) || 0;
+        storiesByTheme.get(String(theme.id)) || storiesByTheme.get(String(slug)) || 0;
 
       const fallback = fallbackThemes[index % fallbackThemes.length];
       return {
         id: theme.id,
         slug,
         title: theme.name || "Untitled Theme",
-        description:
-          theme.description || fallback.description,
+        description: theme.description || fallback.description,
         storiesCount: count,
-        gradient:
-          theme.color
-            ? `linear-gradient(135deg, ${theme.color} 0%, ${theme.color}CC 100%)`
-            : fallback.gradient,
+        gradient: theme.color
+          ? `linear-gradient(135deg, ${theme.color} 0%, ${theme.color}CC 100%)`
+          : fallback.gradient,
         accentColor: theme.color || fallback.accentColor,
         icon: theme.icon || fallback.icon,
       };
