@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { isAdmin, isAdminOrSelf, adminOnly } from "../access";
+import { isAdmin, isAdminOrSelfUserRecord, adminOnly } from "../access";
 
 export const Users: CollectionConfig = {
   slug: "users",
@@ -11,8 +11,8 @@ export const Users: CollectionConfig = {
   },
   access: {
     create: isAdmin,
-    read: isAdminOrSelf,
-    update: isAdminOrSelf,
+    read: isAdminOrSelfUserRecord,
+    update: isAdminOrSelfUserRecord,
     delete: isAdmin,
   },
   fields: [

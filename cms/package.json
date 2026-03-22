@@ -9,7 +9,8 @@
     "start": "cross-env PAYLOAD_CONFIG_PATH=payload.config.ts next start",
     "generate:types": "payload generate:types",
     "init:db": "tsx scripts/init-db.ts",
-    "seed": "tsx seed/index.ts"
+    "seed": "tsx seed/index.ts",
+    "promote:admin": "tsx scripts/promote-admin.ts"
   },
   "dependencies": {
     "payload": "^3.0.0",

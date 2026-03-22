@@ -8,6 +8,13 @@ export const isAdminOrSelf: Access = ({ req: { user } }) => {
   return { user: { equals: user.id } };
 };
 
+// Users collection access must filter by the primary id field, not "user".
+export const isAdminOrSelfUserRecord: Access = ({ req: { user } }) => {
+  if (user?.role === "admin") return true;
+  if (!user) return false;
+  return { id: { equals: user.id } };
+};
+
 export const publicRead: Access = () => true;
 
 export const publicReadAdminWrite = {
@@ -35,4 +42,5 @@ export const publishedOrAdmin: Access = ({ req: { user } }) => {
   return { status: { equals: "published" } };
 };
 
-export const adminOnly: FieldAccess = ({ req: { user } }) => user?.role === "admin";
+export const adminOnly: FieldAccess = ({ req: { user } }) =>
+  user?.role === "admin";
