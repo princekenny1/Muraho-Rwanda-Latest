@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { Plus, Pencil, Trash2, Search, MapPin, Route, Building2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Route, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,61 +36,117 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { LocationPickerMap } from "@/components/cms/LocationPickerMap";
 
+type Relation = string | { id: string; name?: string; title?: string };
+
 interface OutdoorStop {
   id: string;
   title: string;
-  description: string | null;
+  description?: string;
   latitude: number;
   longitude: number;
-  stop_order: number;
-  museum_id: string;
-  marker_color: string | null;
-  marker_icon: string | null;
-  museum?: { name: string };
+  stopOrder: number;
+  museum: Relation;
+  markerColor?: string;
+  markerIcon?: string;
 }
 
 interface RouteStop {
   id: string;
   title: string;
-  description: string | null;
+  description?: string;
   latitude: number;
   longitude: number;
-  stop_order: number;
-  route_id: string;
-  marker_color: string | null;
-  marker_icon: string | null;
-  route?: { title: string };
+  stopOrder: number;
+  route: Relation;
+  markerColor?: string;
+  markerIcon?: string;
 }
+
+interface StopForm {
+  title: string;
+  description: string;
+  latitude: string;
+  longitude: string;
+  stopOrder: number;
+  relationId: string;
+  markerColor: string;
+}
+
+const emptyOutdoorForm: StopForm = {
+  title: "",
+  description: "",
+  latitude: "",
+  longitude: "",
+  stopOrder: 1,
+  relationId: "",
+  markerColor: "#4B5573",
+};
+
+const emptyRouteForm: StopForm = {
+  title: "",
+  description: "",
+  latitude: "",
+  longitude: "",
+  stopOrder: 1,
+  relationId: "",
+  markerColor: "#F97316",
+};
+
+const relationName = (value: Relation): string => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value.name || value.title || value.id;
+};
+
+const relationId = (value: Relation): string => {
+  if (!value) return "";
+  return typeof value === "string" ? value : value.id;
+};
 
 export function StopsManager() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("outdoor");
-  const [editingOutdoorStop, setEditingOutdoorStop] = useState<OutdoorStop | null>(null);
-  const [editingRouteStop, setEditingRouteStop] = useState<RouteStop | null>(null);
+
+  const [creatingOutdoor, setCreatingOutdoor] = useState(false);
+  const [creatingRoute, setCreatingRoute] = useState(false);
+  const [editingOutdoorStop, setEditingOutdoorStop] =
+    useState<OutdoorStop | null>(null);
+  const [editingRouteStop, setEditingRouteStop] = useState<RouteStop | null>(
+    null,
+  );
   const [deleteOutdoorId, setDeleteOutdoorId] = useState<string | null>(null);
   const [deleteRouteId, setDeleteRouteId] = useState<string | null>(null);
 
-  // Fetch outdoor stops
+  const [outdoorForm, setOutdoorForm] = useState<StopForm>(emptyOutdoorForm);
+  const [routeForm, setRouteForm] = useState<StopForm>(emptyRouteForm);
+
   const { data: outdoorStops = [], isLoading: loadingOutdoor } = useQuery({
     queryKey: ["outdoor-stops"],
     queryFn: async () => {
-      const res = await api.find("museum-outdoor-stops", { sort: "stopOrder", limit: 500, depth: 1 });
+      const res = await api.find("museum-outdoor-stops", {
+        sort: "stopOrder",
+        limit: 500,
+        depth: 1,
+      });
       return res.docs as OutdoorStop[];
     },
   });
 
-  // Fetch route stops
   const { data: routeStops = [], isLoading: loadingRoute } = useQuery({
     queryKey: ["route-stops"],
     queryFn: async () => {
-      const res = await api.find("route-stops", { sort: "stopOrder", limit: 500, depth: 1 });
+      const res = await api.find("route-stops", {
+        sort: "stopOrder",
+        limit: 500,
+        depth: 1,
+      });
       return res.docs as RouteStop[];
     },
   });
 
-  // Fetch museums for dropdown
   const { data: museums = [] } = useQuery({
     queryKey: ["museums-list"],
     queryFn: async () => {
@@ -99,7 +155,6 @@ export function StopsManager() {
     },
   });
 
-  // Fetch routes for dropdown
   const { data: routes = [] } = useQuery({
     queryKey: ["routes-list"],
     queryFn: async () => {
@@ -108,11 +163,72 @@ export function StopsManager() {
     },
   });
 
-  // Update outdoor stop mutation
+  const createOutdoorStop = useMutation({
+    mutationFn: async (payload: StopForm) => {
+      return api.create("museum-outdoor-stops", {
+        title: payload.title,
+        description: payload.description || undefined,
+        latitude: Number(payload.latitude),
+        longitude: Number(payload.longitude),
+        stopOrder: payload.stopOrder,
+        museum: payload.relationId,
+        markerColor: payload.markerColor,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["outdoor-stops"] });
+      setOutdoorForm(emptyOutdoorForm);
+      setCreatingOutdoor(false);
+      toast({ title: "Outdoor stop created" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const createRouteStop = useMutation({
+    mutationFn: async (payload: StopForm) => {
+      return api.create("route-stops", {
+        title: payload.title,
+        description: payload.description || undefined,
+        latitude: Number(payload.latitude),
+        longitude: Number(payload.longitude),
+        stopOrder: payload.stopOrder,
+        route: payload.relationId,
+        markerColor: payload.markerColor,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["route-stops"] });
+      setRouteForm(emptyRouteForm);
+      setCreatingRoute(false);
+      toast({ title: "Route stop created" });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const updateOutdoorStop = useMutation({
-    mutationFn: async (stop: Partial<OutdoorStop> & { id: string }) => {
-      const { id, museum, ...data } = stop;
-      await api.update("museum-outdoor-stops", id, data);
+    mutationFn: async (stop: OutdoorStop) => {
+      return api.update("museum-outdoor-stops", stop.id, {
+        title: stop.title,
+        description: stop.description || undefined,
+        latitude: stop.latitude,
+        longitude: stop.longitude,
+        stopOrder: stop.stopOrder,
+        museum: relationId(stop.museum),
+        markerColor: stop.markerColor,
+        markerIcon: stop.markerIcon,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outdoor-stops"] });
@@ -120,15 +236,26 @@ export function StopsManager() {
       setEditingOutdoorStop(null);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
-  // Update route stop mutation
   const updateRouteStop = useMutation({
-    mutationFn: async (stop: Partial<RouteStop> & { id: string }) => {
-      const { id, route, marker_icon, ...data } = stop;
-      await api.update("route-stops", id, data);
+    mutationFn: async (stop: RouteStop) => {
+      return api.update("route-stops", stop.id, {
+        title: stop.title,
+        description: stop.description || undefined,
+        latitude: stop.latitude,
+        longitude: stop.longitude,
+        stopOrder: stop.stopOrder,
+        route: relationId(stop.route),
+        markerColor: stop.markerColor,
+        markerIcon: stop.markerIcon,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["route-stops"] });
@@ -136,45 +263,69 @@ export function StopsManager() {
       setEditingRouteStop(null);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
-  // Delete outdoor stop
   const deleteOutdoorStop = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete("museum-outdoor-stops", id);
-    },
+    mutationFn: async (id: string) => api.delete("museum-outdoor-stops", id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["outdoor-stops"] });
+      setDeleteOutdoorId(null);
       toast({ title: "Outdoor stop deleted" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
-  // Delete route stop
   const deleteRouteStop = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete("route-stops", id);
-    },
+    mutationFn: async (id: string) => api.delete("route-stops", id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["route-stops"] });
+      setDeleteRouteId(null);
       toast({ title: "Route stop deleted" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
   const filteredOutdoorStops = outdoorStops.filter((s) =>
-    s.title.toLowerCase().includes(searchQuery.toLowerCase())
+    s.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const filteredRouteStops = routeStops.filter((s) =>
-    s.title.toLowerCase().includes(searchQuery.toLowerCase())
+    s.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  const validate = (form: StopForm, relationLabel: string) => {
+    if (!form.title.trim()) {
+      toast({ title: "Title is required", variant: "destructive" });
+      return false;
+    }
+    if (!form.relationId) {
+      toast({ title: `${relationLabel} is required`, variant: "destructive" });
+      return false;
+    }
+    if (!form.latitude || !form.longitude) {
+      toast({ title: "Coordinates are required", variant: "destructive" });
+      return false;
+    }
+    return true;
+  };
 
   return (
     <div className="space-y-6">
@@ -182,7 +333,7 @@ export function StopsManager() {
         <div>
           <h2 className="text-xl font-semibold">Manage Stops</h2>
           <p className="text-sm text-muted-foreground">
-            Outdoor stops and route stops across all content
+            Create, edit, and remove outdoor and route stops
           </p>
         </div>
       </div>
@@ -209,11 +360,21 @@ export function StopsManager() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="outdoor" className="mt-4">
+        <TabsContent value="outdoor" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setCreatingOutdoor(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Outdoor Stop
+            </Button>
+          </div>
+
           {loadingOutdoor ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+                <div
+                  key={i}
+                  className="h-16 bg-muted animate-pulse rounded-lg"
+                />
               ))}
             </div>
           ) : filteredOutdoorStops.length === 0 ? (
@@ -221,39 +382,42 @@ export function StopsManager() {
               <CardContent className="py-12 text-center text-muted-foreground">
                 <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No outdoor stops found.</p>
-                <p className="text-sm">Create outdoor stops in Museum Builder</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-2">
               {filteredOutdoorStops.map((stop) => (
-                <Card key={stop.id} className="hover:border-primary/50 transition-colors">
+                <Card
+                  key={stop.id}
+                  className="hover:border-primary/50 transition-colors"
+                >
                   <CardContent className="py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: stop.marker_color || "#4B5573" }}
+                        style={{
+                          backgroundColor: stop.markerColor || "#4B5573",
+                        }}
                       >
                         <Building2 className="h-4 w-4 text-white" />
                       </div>
                       <div>
                         <h3 className="font-medium text-sm">{stop.title}</h3>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {stop.museum && (
-                            <Badge variant="secondary" className="text-xs">
-                              {stop.museum.name}
-                            </Badge>
-                          )}
+                          <Badge variant="secondary" className="text-xs">
+                            {relationName(stop.museum)}
+                          </Badge>
                           <span>
-                            {stop.latitude.toFixed(4)}, {stop.longitude.toFixed(4)}
+                            {stop.latitude.toFixed(4)},{" "}
+                            {stop.longitude.toFixed(4)}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setEditingOutdoorStop(stop)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -274,11 +438,21 @@ export function StopsManager() {
           )}
         </TabsContent>
 
-        <TabsContent value="route" className="mt-4">
+        <TabsContent value="route" className="mt-4 space-y-4">
+          <div className="flex justify-end">
+            <Button onClick={() => setCreatingRoute(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Route Stop
+            </Button>
+          </div>
+
           {loadingRoute ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-16 bg-muted animate-pulse rounded-lg" />
+                <div
+                  key={i}
+                  className="h-16 bg-muted animate-pulse rounded-lg"
+                />
               ))}
             </div>
           ) : filteredRouteStops.length === 0 ? (
@@ -286,39 +460,42 @@ export function StopsManager() {
               <CardContent className="py-12 text-center text-muted-foreground">
                 <Route className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No route stops found.</p>
-                <p className="text-sm">Create route stops in Route Builder</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-2">
               {filteredRouteStops.map((stop) => (
-                <Card key={stop.id} className="hover:border-primary/50 transition-colors">
+                <Card
+                  key={stop.id}
+                  className="hover:border-primary/50 transition-colors"
+                >
                   <CardContent className="py-3 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div 
+                      <div
                         className="w-8 h-8 rounded-full flex items-center justify-center"
-                        style={{ backgroundColor: stop.marker_color || "#F97316" }}
+                        style={{
+                          backgroundColor: stop.markerColor || "#F97316",
+                        }}
                       >
                         <Route className="h-4 w-4 text-white" />
                       </div>
                       <div>
                         <h3 className="font-medium text-sm">{stop.title}</h3>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {stop.route && (
-                            <Badge variant="secondary" className="text-xs">
-                              {stop.route.title}
-                            </Badge>
-                          )}
+                          <Badge variant="secondary" className="text-xs">
+                            {relationName(stop.route)}
+                          </Badge>
                           <span>
-                            {stop.latitude.toFixed(4)}, {stop.longitude.toFixed(4)}
+                            {stop.latitude.toFixed(4)},{" "}
+                            {stop.longitude.toFixed(4)}
                           </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setEditingRouteStop(stop)}
                       >
                         <Pencil className="h-4 w-4" />
@@ -340,8 +517,220 @@ export function StopsManager() {
         </TabsContent>
       </Tabs>
 
-      {/* Edit Outdoor Stop Dialog */}
-      <Dialog open={!!editingOutdoorStop} onOpenChange={(open) => !open && setEditingOutdoorStop(null)}>
+      <Dialog open={creatingOutdoor} onOpenChange={setCreatingOutdoor}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Outdoor Stop</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={outdoorForm.title}
+                onChange={(e) =>
+                  setOutdoorForm({ ...outdoorForm, title: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Museum *</Label>
+              <Select
+                value={outdoorForm.relationId}
+                onValueChange={(value) =>
+                  setOutdoorForm({ ...outdoorForm, relationId: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select museum" />
+                </SelectTrigger>
+                <SelectContent>
+                  {museums.map((museum) => (
+                    <SelectItem key={museum.id} value={museum.id}>
+                      {museum.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={outdoorForm.description}
+                onChange={(e) =>
+                  setOutdoorForm({
+                    ...outdoorForm,
+                    description: e.target.value,
+                  })
+                }
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Location *</Label>
+              <LocationPickerMap
+                latitude={outdoorForm.latitude}
+                longitude={outdoorForm.longitude}
+                onLocationChange={(lat, lng) =>
+                  setOutdoorForm({
+                    ...outdoorForm,
+                    latitude: lat.toString(),
+                    longitude: lng.toString(),
+                  })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Stop Order</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={outdoorForm.stopOrder}
+                  onChange={(e) =>
+                    setOutdoorForm({
+                      ...outdoorForm,
+                      stopOrder: Number(e.target.value || 1),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Marker Color</Label>
+                <Input
+                  type="color"
+                  value={outdoorForm.markerColor}
+                  onChange={(e) =>
+                    setOutdoorForm({
+                      ...outdoorForm,
+                      markerColor: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatingOutdoor(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!validate(outdoorForm, "Museum")) return;
+                createOutdoorStop.mutate(outdoorForm);
+              }}
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={creatingRoute} onOpenChange={setCreatingRoute}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Create Route Stop</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
+            <div className="space-y-2">
+              <Label>Title *</Label>
+              <Input
+                value={routeForm.title}
+                onChange={(e) =>
+                  setRouteForm({ ...routeForm, title: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Route *</Label>
+              <Select
+                value={routeForm.relationId}
+                onValueChange={(value) =>
+                  setRouteForm({ ...routeForm, relationId: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select route" />
+                </SelectTrigger>
+                <SelectContent>
+                  {routes.map((route) => (
+                    <SelectItem key={route.id} value={route.id}>
+                      {route.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Description</Label>
+              <Textarea
+                value={routeForm.description}
+                onChange={(e) =>
+                  setRouteForm({ ...routeForm, description: e.target.value })
+                }
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Location *</Label>
+              <LocationPickerMap
+                latitude={routeForm.latitude}
+                longitude={routeForm.longitude}
+                onLocationChange={(lat, lng) =>
+                  setRouteForm({
+                    ...routeForm,
+                    latitude: lat.toString(),
+                    longitude: lng.toString(),
+                  })
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Stop Order</Label>
+                <Input
+                  type="number"
+                  min={1}
+                  value={routeForm.stopOrder}
+                  onChange={(e) =>
+                    setRouteForm({
+                      ...routeForm,
+                      stopOrder: Number(e.target.value || 1),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Marker Color</Label>
+                <Input
+                  type="color"
+                  value={routeForm.markerColor}
+                  onChange={(e) =>
+                    setRouteForm({ ...routeForm, markerColor: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreatingRoute(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (!validate(routeForm, "Route")) return;
+                createRouteStop.mutate(routeForm);
+              }}
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!editingOutdoorStop}
+        onOpenChange={(open) => !open && setEditingOutdoorStop(null)}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Outdoor Stop</DialogTitle>
@@ -353,16 +742,45 @@ export function StopsManager() {
                 <Input
                   value={editingOutdoorStop.title}
                   onChange={(e) =>
-                    setEditingOutdoorStop({ ...editingOutdoorStop, title: e.target.value })
+                    setEditingOutdoorStop({
+                      ...editingOutdoorStop,
+                      title: e.target.value,
+                    })
                   }
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Museum</Label>
+                <Select
+                  value={relationId(editingOutdoorStop.museum)}
+                  onValueChange={(value) =>
+                    setEditingOutdoorStop({
+                      ...editingOutdoorStop,
+                      museum: value,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select museum" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {museums.map((museum) => (
+                      <SelectItem key={museum.id} value={museum.id}>
+                        {museum.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
                   value={editingOutdoorStop.description || ""}
                   onChange={(e) =>
-                    setEditingOutdoorStop({ ...editingOutdoorStop, description: e.target.value })
+                    setEditingOutdoorStop({
+                      ...editingOutdoorStop,
+                      description: e.target.value,
+                    })
                   }
                   rows={3}
                 />
@@ -373,28 +791,57 @@ export function StopsManager() {
                   latitude={editingOutdoorStop.latitude}
                   longitude={editingOutdoorStop.longitude}
                   onLocationChange={(lat, lng) =>
-                    setEditingOutdoorStop({ ...editingOutdoorStop, latitude: lat, longitude: lng })
+                    setEditingOutdoorStop({
+                      ...editingOutdoorStop,
+                      latitude: lat,
+                      longitude: lng,
+                    })
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Marker Color</Label>
-                <Input
-                  type="color"
-                  value={editingOutdoorStop.marker_color || "#4B5573"}
-                  onChange={(e) =>
-                    setEditingOutdoorStop({ ...editingOutdoorStop, marker_color: e.target.value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Stop Order</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={editingOutdoorStop.stopOrder}
+                    onChange={(e) =>
+                      setEditingOutdoorStop({
+                        ...editingOutdoorStop,
+                        stopOrder: Number(e.target.value || 1),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Marker Color</Label>
+                  <Input
+                    type="color"
+                    value={editingOutdoorStop.markerColor || "#4B5573"}
+                    onChange={(e) =>
+                      setEditingOutdoorStop({
+                        ...editingOutdoorStop,
+                        markerColor: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingOutdoorStop(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setEditingOutdoorStop(null)}
+            >
               Cancel
             </Button>
             <Button
-              onClick={() => editingOutdoorStop && updateOutdoorStop.mutate(editingOutdoorStop)}
+              onClick={() =>
+                editingOutdoorStop &&
+                updateOutdoorStop.mutate(editingOutdoorStop)
+              }
             >
               Save Changes
             </Button>
@@ -402,8 +849,10 @@ export function StopsManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Edit Route Stop Dialog */}
-      <Dialog open={!!editingRouteStop} onOpenChange={(open) => !open && setEditingRouteStop(null)}>
+      <Dialog
+        open={!!editingRouteStop}
+        onOpenChange={(open) => !open && setEditingRouteStop(null)}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Edit Route Stop</DialogTitle>
@@ -415,16 +864,42 @@ export function StopsManager() {
                 <Input
                   value={editingRouteStop.title}
                   onChange={(e) =>
-                    setEditingRouteStop({ ...editingRouteStop, title: e.target.value })
+                    setEditingRouteStop({
+                      ...editingRouteStop,
+                      title: e.target.value,
+                    })
                   }
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Route</Label>
+                <Select
+                  value={relationId(editingRouteStop.route)}
+                  onValueChange={(value) =>
+                    setEditingRouteStop({ ...editingRouteStop, route: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select route" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {routes.map((route) => (
+                      <SelectItem key={route.id} value={route.id}>
+                        {route.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label>Description</Label>
                 <Textarea
                   value={editingRouteStop.description || ""}
                   onChange={(e) =>
-                    setEditingRouteStop({ ...editingRouteStop, description: e.target.value })
+                    setEditingRouteStop({
+                      ...editingRouteStop,
+                      description: e.target.value,
+                    })
                   }
                   rows={3}
                 />
@@ -435,19 +910,42 @@ export function StopsManager() {
                   latitude={editingRouteStop.latitude}
                   longitude={editingRouteStop.longitude}
                   onLocationChange={(lat, lng) =>
-                    setEditingRouteStop({ ...editingRouteStop, latitude: lat, longitude: lng })
+                    setEditingRouteStop({
+                      ...editingRouteStop,
+                      latitude: lat,
+                      longitude: lng,
+                    })
                   }
                 />
               </div>
-              <div className="space-y-2">
-                <Label>Marker Color</Label>
-                <Input
-                  type="color"
-                  value={editingRouteStop.marker_color || "#F97316"}
-                  onChange={(e) =>
-                    setEditingRouteStop({ ...editingRouteStop, marker_color: e.target.value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Stop Order</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={editingRouteStop.stopOrder}
+                    onChange={(e) =>
+                      setEditingRouteStop({
+                        ...editingRouteStop,
+                        stopOrder: Number(e.target.value || 1),
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Marker Color</Label>
+                  <Input
+                    type="color"
+                    value={editingRouteStop.markerColor || "#F97316"}
+                    onChange={(e) =>
+                      setEditingRouteStop({
+                        ...editingRouteStop,
+                        markerColor: e.target.value,
+                      })
+                    }
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -456,7 +954,9 @@ export function StopsManager() {
               Cancel
             </Button>
             <Button
-              onClick={() => editingRouteStop && updateRouteStop.mutate(editingRouteStop)}
+              onClick={() =>
+                editingRouteStop && updateRouteStop.mutate(editingRouteStop)
+              }
             >
               Save Changes
             </Button>
@@ -464,8 +964,10 @@ export function StopsManager() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmations */}
-      <AlertDialog open={!!deleteOutdoorId} onOpenChange={(open) => !open && setDeleteOutdoorId(null)}>
+      <AlertDialog
+        open={!!deleteOutdoorId}
+        onOpenChange={(open) => !open && setDeleteOutdoorId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete outdoor stop?</AlertDialogTitle>
@@ -476,7 +978,9 @@ export function StopsManager() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteOutdoorId && deleteOutdoorStop.mutate(deleteOutdoorId)}
+              onClick={() =>
+                deleteOutdoorId && deleteOutdoorStop.mutate(deleteOutdoorId)
+              }
               className="bg-destructive text-destructive-foreground"
             >
               Delete
@@ -485,18 +989,23 @@ export function StopsManager() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deleteRouteId} onOpenChange={(open) => !open && setDeleteRouteId(null)}>
+      <AlertDialog
+        open={!!deleteRouteId}
+        onOpenChange={(open) => !open && setDeleteRouteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete route stop?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently remove this route stop and its content blocks.
+              This will permanently remove this route stop.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteRouteId && deleteRouteStop.mutate(deleteRouteId)}
+              onClick={() =>
+                deleteRouteId && deleteRouteStop.mutate(deleteRouteId)
+              }
               className="bg-destructive text-destructive-foreground"
             >
               Delete

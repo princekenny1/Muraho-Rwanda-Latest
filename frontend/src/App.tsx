@@ -1,8 +1,9 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ContentAccessProvider } from "@/hooks/useContentAccess";
 import {
@@ -74,6 +75,38 @@ const queryClient = new QueryClient({
   },
 });
 
+const resolvePayloadAdminOrigin = () => {
+  const configured = (import.meta.env.VITE_PAYLOAD_ADMIN_ORIGIN || "")
+    .trim()
+    .replace(/\/+$/, "");
+  if (configured) return configured;
+
+  if (
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1"].includes(window.location.hostname)
+  ) {
+    return "http://localhost:3000";
+  }
+
+  return typeof window !== "undefined" ? window.location.origin : "";
+};
+
+function PayloadAdminRedirect() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const targetOrigin = resolvePayloadAdminOrigin();
+    if (!targetOrigin) return;
+
+    const targetUrl = `${targetOrigin}${location.pathname}${location.search}${location.hash}`;
+    if (typeof window !== "undefined" && window.location.href !== targetUrl) {
+      window.location.replace(targetUrl);
+    }
+  }, [location]);
+
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -125,6 +158,32 @@ const App = () => (
                 <Route path="/search" element={<SearchResultsPage />} />
                 <Route path="/payment/success" element={<PaymentSuccess />} />
                 <Route path="/payment/cancel" element={<PaymentCancel />} />
+
+                {/* Payload admin reserved paths */}
+                <Route
+                  path="/admin/collections/*"
+                  element={<PayloadAdminRedirect />}
+                />
+                <Route
+                  path="/admin/globals/*"
+                  element={<PayloadAdminRedirect />}
+                />
+                <Route
+                  path="/admin/versions/*"
+                  element={<PayloadAdminRedirect />}
+                />
+                <Route
+                  path="/admin/account/*"
+                  element={<PayloadAdminRedirect />}
+                />
+                <Route
+                  path="/admin/login/*"
+                  element={<PayloadAdminRedirect />}
+                />
+                <Route
+                  path="/admin/create-first-user/*"
+                  element={<PayloadAdminRedirect />}
+                />
 
                 {/* Authenticated routes */}
                 <Route

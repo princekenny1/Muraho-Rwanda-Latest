@@ -13,11 +13,7 @@ import {
   TimeOfDayIndicator,
   NightModeMapOverlay,
 } from "@/components/ambient";
-import {
-  WeatherProvider,
-  WeatherStorySuggestion,
-  WeatherMapOverlay,
-} from "@/components/ambient";
+import { WeatherProvider, WeatherMapOverlay } from "@/components/ambient";
 
 type AppView =
   | { type: "home" }
@@ -142,14 +138,6 @@ const Index = () => {
         {/* Global ambient indicators */}
         <div className="fixed top-4 right-4 z-50">
           <TimeOfDayIndicator showLabel={false} />
-        </div>
-
-        {/* Weather-triggered story suggestions */}
-        <div className="fixed top-16 left-4 right-4 z-40">
-          <WeatherStorySuggestion
-            onAccept={(types) => console.log("Show stories of types:", types)}
-            onDismiss={() => console.log("Weather suggestion dismissed")}
-          />
         </div>
 
         {/* Main app content */}

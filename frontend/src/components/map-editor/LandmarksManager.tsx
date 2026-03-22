@@ -1,7 +1,15 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
-import { Plus, Pencil, Trash2, Search, Landmark, Eye, EyeOff } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  Landmark,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,9 +63,9 @@ interface Landmark {
   description: string | null;
   latitude: number | null;
   longitude: number | null;
-  location_type: string | null;
-  cover_image: string | null;
-  is_active: boolean | null;
+  locationType: string | null;
+  coverImage: string | null;
+  isActive: boolean | null;
   slug: string;
 }
 
@@ -74,9 +82,9 @@ export function LandmarksManager() {
     description: "",
     latitude: "",
     longitude: "",
-    location_type: "landmark",
-    cover_image: "",
-    is_active: true,
+    locationType: "landmark",
+    coverImage: "",
+    isActive: true,
   });
 
   // Fetch landmarks (locations that are viewable on map as public markers)
@@ -99,7 +107,11 @@ export function LandmarksManager() {
       resetForm();
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -115,7 +127,11 @@ export function LandmarksManager() {
       setEditingLandmark(null);
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -129,7 +145,11 @@ export function LandmarksManager() {
       toast({ title: "Landmark deleted" });
     },
     onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -139,9 +159,9 @@ export function LandmarksManager() {
       description: "",
       latitude: "",
       longitude: "",
-      location_type: "landmark",
-      cover_image: "",
-      is_active: true,
+      locationType: "landmark",
+      coverImage: "",
+      isActive: true,
     });
     setIsCreating(false);
   };
@@ -152,9 +172,9 @@ export function LandmarksManager() {
       description: landmark.description || "",
       latitude: landmark.latitude?.toString() || "",
       longitude: landmark.longitude?.toString() || "",
-      location_type: landmark.location_type || "landmark",
-      cover_image: landmark.cover_image || "",
-      is_active: landmark.is_active ?? true,
+      locationType: landmark.locationType || "landmark",
+      coverImage: landmark.coverImage || "",
+      isActive: landmark.isActive ?? true,
     });
     setEditingLandmark(landmark);
   };
@@ -175,9 +195,9 @@ export function LandmarksManager() {
       description: formData.description || null,
       latitude: formData.latitude ? parseFloat(formData.latitude) : null,
       longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-      location_type: formData.location_type,
-      cover_image: formData.cover_image || null,
-      is_active: formData.is_active,
+      locationType: formData.locationType,
+      coverImage: formData.coverImage || null,
+      isActive: formData.isActive,
       slug,
     };
 
@@ -189,7 +209,7 @@ export function LandmarksManager() {
   };
 
   const filteredLandmarks = landmarks.filter((l) =>
-    l.name.toLowerCase().includes(searchQuery.toLowerCase())
+    l.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -236,7 +256,10 @@ export function LandmarksManager() {
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
           {filteredLandmarks.map((landmark) => (
-            <Card key={landmark.id} className="hover:border-primary/50 transition-colors">
+            <Card
+              key={landmark.id}
+              className="hover:border-primary/50 transition-colors"
+            >
               <CardContent className="py-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
@@ -245,26 +268,34 @@ export function LandmarksManager() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-sm">{landmark.name}</h3>
-                      {!landmark.is_active && (
+                      {!landmark.isActive && (
                         <EyeOff className="h-3 w-3 text-muted-foreground" />
                       )}
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      {landmark.location_type && (
-                        <Badge variant="secondary" className="capitalize text-xs">
-                          {landmark.location_type.replace("_", " ")}
+                      {landmark.locationType && (
+                        <Badge
+                          variant="secondary"
+                          className="capitalize text-xs"
+                        >
+                          {landmark.locationType.replace("_", " ")}
                         </Badge>
                       )}
                       {landmark.latitude && landmark.longitude && (
                         <span>
-                          {landmark.latitude.toFixed(4)}, {landmark.longitude.toFixed(4)}
+                          {landmark.latitude.toFixed(4)},{" "}
+                          {landmark.longitude.toFixed(4)}
                         </span>
                       )}
                     </div>
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => handleEdit(landmark)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(landmark)}
+                  >
                     <Pencil className="h-4 w-4" />
                   </Button>
                   <Button
@@ -283,30 +314,39 @@ export function LandmarksManager() {
       )}
 
       {/* Create/Edit Dialog */}
-      <Dialog open={isCreating || !!editingLandmark} onOpenChange={(open) => {
-        if (!open) {
-          resetForm();
-          setEditingLandmark(null);
-        }
-      }}>
+      <Dialog
+        open={isCreating || !!editingLandmark}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetForm();
+            setEditingLandmark(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editingLandmark ? "Edit Landmark" : "Add Landmark"}</DialogTitle>
+            <DialogTitle>
+              {editingLandmark ? "Edit Landmark" : "Add Landmark"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto">
             <div className="space-y-2">
               <Label>Name *</Label>
               <Input
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="e.g., Volcano Viewpoint"
               />
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
               <Select
-                value={formData.location_type}
-                onValueChange={(value) => setFormData({ ...formData, location_type: value })}
+                value={formData.locationType}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, locationType: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -337,8 +377,10 @@ export function LandmarksManager() {
             <div className="space-y-2">
               <Label>Cover Image</Label>
               <MediaUpload
-                value={formData.cover_image}
-                onChange={(url) => setFormData({ ...formData, cover_image: url || "" })}
+                value={formData.coverImage}
+                onChange={(url) =>
+                  setFormData({ ...formData, coverImage: url || "" })
+                }
                 mediaType="image"
                 folder="landmarks"
               />
@@ -347,7 +389,9 @@ export function LandmarksManager() {
               <Label>Description</Label>
               <Textarea
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Brief description..."
                 rows={3}
               />
@@ -355,16 +399,21 @@ export function LandmarksManager() {
             <div className="flex items-center justify-between">
               <Label>Visible on Map</Label>
               <Switch
-                checked={formData.is_active}
-                onCheckedChange={(checked) => setFormData({ ...formData, is_active: checked })}
+                checked={formData.isActive}
+                onCheckedChange={(checked) =>
+                  setFormData({ ...formData, isActive: checked })
+                }
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              resetForm();
-              setEditingLandmark(null);
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                resetForm();
+                setEditingLandmark(null);
+              }}
+            >
               Cancel
             </Button>
             <Button onClick={handleSave}>
@@ -375,7 +424,10 @@ export function LandmarksManager() {
       </Dialog>
 
       {/* Delete Confirmation */}
-      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+      <AlertDialog
+        open={!!deleteId}
+        onOpenChange={(open) => !open && setDeleteId(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete landmark?</AlertDialogTitle>

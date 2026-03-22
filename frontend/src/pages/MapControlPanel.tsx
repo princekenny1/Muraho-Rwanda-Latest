@@ -11,9 +11,16 @@ import {
   Layers,
   Settings,
   Map as MapIcon,
+  Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -61,7 +68,10 @@ export default function MapControlPanel() {
   const { data: outdoorStops = [] } = useQuery({
     queryKey: ["map-outdoor-stops"],
     queryFn: async () => {
-      const res = await api.find("museum-outdoor-stops", { depth: 1, limit: 500 });
+      const res = await api.find("museum-outdoor-stops", {
+        depth: 1,
+        limit: 500,
+      });
       return res.docs;
     },
   });
@@ -103,7 +113,7 @@ export default function MapControlPanel() {
           lat: Number(loc.latitude),
           lng: Number(loc.longitude),
           title: loc.name,
-          subtitle: loc.location_type || undefined,
+          subtitle: loc.locationType || undefined,
           color: "#f97316",
         });
       }
@@ -118,7 +128,7 @@ export default function MapControlPanel() {
         lng: Number(stop.longitude),
         title: stop.title,
         subtitle: stop.museum?.name,
-        color: stop.marker_color || "#4B5573",
+        color: stop.markerColor || "#4B5573",
       });
     });
 
@@ -131,7 +141,7 @@ export default function MapControlPanel() {
         lng: Number(stop.longitude),
         title: stop.title,
         subtitle: stop.route?.title,
-        color: stop.marker_color || "#F97316",
+        color: stop.markerColor || "#F97316",
       });
     });
 
@@ -208,16 +218,26 @@ export default function MapControlPanel() {
       {/* Header */}
       <header className="border-b">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div>
-              <h1 className="text-xl font-bold">Map Control Panel</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage all map-based data for routes, museums, stops & places
-              </p>
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/admin")}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold">Map Control Panel</h1>
+                <p className="text-sm text-muted-foreground">
+                  Manage all map-based data for routes, museums, stops & places
+                </p>
+              </div>
             </div>
+            <Button onClick={() => navigate("/admin/routes")}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Route
+            </Button>
           </div>
         </div>
       </header>
@@ -301,7 +321,9 @@ export default function MapControlPanel() {
               </Card>
               <Card className="bg-primary/5">
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium">Total Pins</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Total Pins
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-2xl font-bold">{stats.totalPins}</p>
@@ -372,9 +394,7 @@ export default function MapControlPanel() {
                   <CardTitle>Routes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
-                    Open Route Builder
-                  </CardDescription>
+                  <CardDescription>Open Route Builder</CardDescription>
                 </CardContent>
               </Card>
               <Card
@@ -386,9 +406,7 @@ export default function MapControlPanel() {
                   <CardTitle>Museums</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription>
-                    Open Museum Builder
-                  </CardDescription>
+                  <CardDescription>Open Museum Builder</CardDescription>
                 </CardContent>
               </Card>
             </div>
