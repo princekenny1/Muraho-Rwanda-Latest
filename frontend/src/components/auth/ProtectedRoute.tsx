@@ -15,7 +15,11 @@ interface ProtectedRouteProps {
   fallback?: React.ReactNode;
 }
 
-export function ProtectedRoute({ children, role, fallback }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  role,
+  fallback,
+}: ProtectedRouteProps) {
   const { user, loading } = useAuth();
   const location = useLocation();
 
@@ -54,12 +58,19 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 /**
+ * EditorRoute — Shorthand for content editor pages (admin + moderator).
+ */
+export function EditorRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute role={["admin", "moderator"]}>{children}</ProtectedRoute>
+  );
+}
+
+/**
  * AgencyRoute — Shorthand for agency operator pages.
  */
 export function AgencyRoute({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute role={["agency_admin", "admin"]}>
-      {children}
-    </ProtectedRoute>
+    <ProtectedRoute role={["agency_admin", "admin"]}>{children}</ProtectedRoute>
   );
 }

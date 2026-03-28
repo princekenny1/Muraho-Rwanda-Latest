@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { publicReadAdminWrite } from "../access";
+import { publicReadEditorWrite } from "../access";
 import { autoSlug } from "../hooks";
 
 export const Testimonies: CollectionConfig = {
@@ -16,7 +16,7 @@ export const Testimonies: CollectionConfig = {
     group: "Content",
     description: "Survivor testimonies — handle with extreme care and dignity.",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   versions: { drafts: true },
   hooks: { beforeValidate: [autoSlug] },
   fields: [

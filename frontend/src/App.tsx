@@ -9,6 +9,7 @@ import { ContentAccessProvider } from "@/hooks/useContentAccess";
 import {
   ProtectedRoute,
   AdminRoute,
+  EditorRoute,
   AgencyRoute,
 } from "@/components/auth/ProtectedRoute";
 import { ErrorBoundary } from "@/components/error/ErrorBoundary";
@@ -225,25 +226,25 @@ const App = () => (
                 <Route
                   path="/admin/testimonies"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <TestimonyAdmin />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
                   path="/admin/documentaries"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <DocumentaryAdmin />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
                   path="/admin/exhibitions"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <ExhibitionAdmin />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
@@ -265,17 +266,17 @@ const App = () => (
                 <Route
                   path="/admin/content"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <ContentCMS />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
                   path="/admin/map"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <MapControlPanel />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
@@ -289,33 +290,33 @@ const App = () => (
                 <Route
                   path="/admin/museums"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <MuseumAdmin />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
                   path="/admin/museums/:museumId"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <MuseumBuilder />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
                   path="/admin/routes"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <RouteAdmin />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
                 <Route
                   path="/admin/routes/:routeId"
                   element={
-                    <AdminRoute>
+                    <EditorRoute>
                       <RouteBuilder />
-                    </AdminRoute>
+                    </EditorRoute>
                   }
                 />
 

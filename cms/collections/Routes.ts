@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { publicReadAdminWrite, publishedOrAdmin, isAdmin } from "../access";
+import { publicReadEditorWrite, publishedOrEditor, isAdmin } from "../access";
 import { autoSlug } from "../hooks";
 
 /**
@@ -12,7 +12,7 @@ export const Routes: CollectionConfig = {
     defaultColumns: ["title", "difficulty", "status", "updatedAt"],
     group: "Content",
   },
-  access: { ...publicReadAdminWrite, read: publishedOrAdmin },
+  access: { ...publicReadEditorWrite, read: publishedOrEditor },
   versions: { drafts: true },
   hooks: { beforeValidate: [autoSlug] },
   fields: [
@@ -72,7 +72,7 @@ export const RouteStops: CollectionConfig = {
     defaultColumns: ["title", "route", "stopOrder", "markerIcon"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   fields: [
     {
       name: "route",
@@ -148,7 +148,7 @@ export const StopContentBlocks: CollectionConfig = {
     defaultColumns: ["stop", "blockType", "blockOrder"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   fields: [
     {
       name: "stop",

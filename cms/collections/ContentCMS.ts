@@ -1,7 +1,7 @@
 import type { CollectionConfig } from "payload";
 import {
-  publicReadAdminWrite,
-  publishedOrAdmin,
+  publicReadEditorWrite,
+  publishedOrEditor,
   isAdmin,
   publicRead,
 } from "../access";
@@ -15,7 +15,7 @@ export const People: CollectionConfig = {
     defaultColumns: ["name", "role", "birthYear"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   hooks: { beforeValidate: [autoSlug] },
   fields: [
     { name: "name", type: "text", required: true },
@@ -51,7 +51,7 @@ export const Themes: CollectionConfig = {
     defaultColumns: ["name", "slug", "isActive"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   hooks: { beforeValidate: [autoSlug] },
   fields: [
     { name: "name", type: "text", required: true, unique: true },
@@ -76,7 +76,7 @@ export const Locations: CollectionConfig = {
     defaultColumns: ["name", "locationType", "isActive"],
     group: "Places",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   hooks: { beforeValidate: [autoSlug] },
   fields: [
     { name: "name", type: "text", required: true, localized: true },
@@ -116,7 +116,7 @@ export const HistoricalEvents: CollectionConfig = {
     defaultColumns: ["name", "year", "eventType", "isSensitive"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   hooks: { beforeValidate: [autoSlug] },
   fields: [
     { name: "name", type: "text", required: true, localized: true },
@@ -152,7 +152,7 @@ export const Stories: CollectionConfig = {
     defaultColumns: ["title", "status", "isFeatured", "updatedAt"],
     group: "Content",
   },
-  access: { ...publicReadAdminWrite, read: publishedOrAdmin },
+  access: { ...publicReadEditorWrite, read: publishedOrEditor },
   versions: { drafts: true },
   hooks: { beforeValidate: [autoSlug] },
   fields: [
@@ -227,7 +227,7 @@ export const StoryBlocks: CollectionConfig = {
     defaultColumns: ["story", "blockType", "blockOrder"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   fields: [
     {
       name: "story",
@@ -267,7 +267,7 @@ export const Quotes: CollectionConfig = {
     defaultColumns: ["text", "attribution", "isFeatured"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   fields: [
     { name: "text", type: "textarea", required: true, localized: true },
     { name: "attribution", type: "text" },
@@ -291,7 +291,7 @@ export const ContentTags: CollectionConfig = {
     defaultColumns: ["contentType", "contentId", "tagType", "tagId"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   fields: [
     { name: "contentId", type: "text", required: true, index: true },
     {
@@ -360,7 +360,7 @@ export const DocumentaryClips: CollectionConfig = {
     defaultColumns: ["documentary", "title", "clipOrder", "isTrailer"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   fields: [
     {
       name: "documentary",

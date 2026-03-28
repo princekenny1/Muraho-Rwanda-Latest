@@ -9,7 +9,7 @@ on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [main]
+    branches: [master, main]
 
 jobs:
   deploy:
@@ -32,7 +32,9 @@ jobs:
             cd /opt/muraho-rwanda
 
             # Pull latest
-            git pull origin main
+            BRANCH="${{ github.event.workflow_run.head_branch }}"
+            if [ -z "$BRANCH" ]; then BRANCH="master"; fi
+            git pull origin "$BRANCH"
 
             # Rebuild and restart services
             cd infra/docker

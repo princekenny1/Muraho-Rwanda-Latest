@@ -1,5 +1,5 @@
 import type { CollectionConfig } from "payload";
-import { publicReadAdminWrite, publicRead, isAdmin } from "../access";
+import { publicReadEditorWrite, publicRead, isAdmin } from "../access";
 import { autoSlug } from "../hooks";
 
 /**
@@ -14,7 +14,7 @@ export const Documentaries: CollectionConfig = {
     defaultColumns: ["title", "type", "year", "isFeatured", "updatedAt"],
     group: "Content",
   },
-  access: publicReadAdminWrite,
+  access: publicReadEditorWrite,
   versions: { drafts: true },
   hooks: { beforeValidate: [autoSlug] },
   fields: [
