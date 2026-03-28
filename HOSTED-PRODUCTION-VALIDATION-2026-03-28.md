@@ -5,6 +5,7 @@ Target host: http://152.42.136.241
 Tester: GitHub Copilot (GPT-5.3-Codex)
 
 ## Scope
+
 - Hosted CMS/admin checks on port 3000
 - Hosted frontend checks on port 5173
 - Live API CRUD and custom endpoint checks
@@ -13,6 +14,7 @@ Tester: GitHub Copilot (GPT-5.3-Codex)
 - At least one row per admin collection page
 
 ## Hosted CMS/Admin (3000)
+
 Result: PASS
 
 - Verified authenticated navigation across 43 admin collection/global pages.
@@ -20,6 +22,7 @@ Result: PASS
 - Added at least one data row for each admin collection page in the matrix.
 
 ## Hosted Frontend (5173)
+
 Result: PARTIAL PASS
 
 - Public routes loaded with HTTP 200:
@@ -33,9 +36,11 @@ Result: PARTIAL PASS
   - /admin/map, /admin/monitoring, /admin/museums, /admin/routes
 
 ## Data-Creation Validation (Hosted API)
+
 Result: PASS
 
 Created and verified live records across major collections:
+
 - theme id=1
 - person id=1
 - location id=2
@@ -79,6 +84,7 @@ Created and verified live records across major collections:
 - content-embedding id=1
 
 ## Media/Avatar Validation
+
 Result: PASS
 
 - Uploaded image media id=1 via multipart to /api/media
@@ -88,9 +94,11 @@ Result: PASS
 - Uploaded audio file id=1 via multipart to /api/audio-files
 
 ## Custom Endpoint Validation (Hosted)
+
 Result: MIXED
 
 Pass:
+
 - GET /api/health => 200
 - POST /api/spatial/nearby => 200
 - POST /api/spatial/bbox => 200
@@ -99,15 +107,18 @@ Pass:
 - POST /api/webhooks/stripe (invalid signature) => 400 (expected reject)
 
 Fail:
+
 - POST /api/ask-rwanda => 404
 - POST /api/payments/create-checkout => 404
 - POST /api/access-codes/redeem => 404
 
 Note:
+
 - POST /api/webhooks/flutterwave with invalid hash returned 200 in this environment.
   This is potentially unsafe if FLUTTERWAVE_WEBHOOK_HASH is not set in production.
 
 ## Functional Findings (Production Blockers)
+
 1. Missing hosted custom endpoints
    - /api/ask-rwanda, /api/payments/create-checkout, /api/access-codes/redeem return 404.
    - These are listed in source endpoint registry but are not available on hosted deployment.
@@ -125,6 +136,7 @@ Note:
    - Requires follow-up on user creation/auth flow expectations for production smoke users.
 
 ## Final Readiness Status
+
 - CMS/Admin data operations: READY
 - Frontend route availability: MOSTLY READY
 - Core monetization and code redemption API paths: NOT READY (missing endpoints)

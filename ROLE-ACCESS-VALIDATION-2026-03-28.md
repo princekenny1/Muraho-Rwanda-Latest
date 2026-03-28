@@ -5,15 +5,18 @@ Host: http://152.42.136.241:3000/api
 Scope: Role behavior for user, moderator, agency_admin (admin already validated separately)
 
 ## How this was validated
+
 - Created fresh hosted test users for each role.
 - Logged in as each role and executed live authorization checks.
 - Verified both status codes and filtered data visibility.
 
 ## Expected policy from code
+
 - Shared access rules are defined in [cms/access/index.ts](cms/access/index.ts#L1).
 - Frontend route guards are defined in [frontend/src/components/auth/ProtectedRoute.tsx](frontend/src/components/auth/ProtectedRoute.tsx#L1).
 
 Summary from policy:
+
 - admin: full access
 - agency_admin: agency routes and agency access-code operations
 - user: own record + owner-scoped user-data + public reads
@@ -22,6 +25,7 @@ Summary from policy:
 ## Live hosted results
 
 ### user
+
 - Login: PASS (200)
 - Read own profile via /users/me: PASS (200)
 - Read stories: PASS (200)
@@ -34,6 +38,7 @@ Summary from policy:
 - Access-codes read/create: BLOCKED as expected (403/403)
 
 ### moderator
+
 - Login: PASS (200)
 - Read own profile via /users/me: PASS (200)
 - Read stories: PASS (200)
@@ -46,6 +51,7 @@ Summary from policy:
 - Access-codes read/create: BLOCKED as expected (403/403)
 
 ### agency_admin
+
 - Login: PASS (200)
 - Read own profile via /users/me: PASS (200)
 - Read stories: PASS (200)
@@ -61,6 +67,7 @@ Summary from policy:
 - Read analytics-events: BLOCKED as expected (403, admin-only)
 
 ## Interpretation: What each role is for right now
+
 - user:
   - End-user account role.
   - Can use personal/account features and owner-scoped user data.
@@ -77,5 +84,7 @@ Summary from policy:
   - Cannot perform admin-only content or analytics operations.
 
 ## Conclusion
+
 Non-admin role authorization is working correctly for current policy, with one key product gap:
+
 - moderator has no differentiated permissions today (functionally user-level).
