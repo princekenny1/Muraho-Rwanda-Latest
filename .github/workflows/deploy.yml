@@ -7,7 +7,7 @@ name: Deploy
 
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [CI/CD, CI]
     types: [completed]
     branches: [master, main]
 
