@@ -21,7 +21,7 @@ import type { Route } from "@/types/routes";
 
 export default function RouteAdmin() {
   const navigate = useNavigate();
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { routes, loading, createRoute, deleteRoute, publishRoute, unpublishRoute } = useRouteAdmin();
   
   const [showForm, setShowForm] = useState(false);
@@ -35,12 +35,14 @@ export default function RouteAdmin() {
     );
   }
 
-  if (!user || !isAdmin()) {
+  const canEditRoutes = user?.role === "admin" || user?.role === "moderator";
+
+  if (!user || !canEditRoutes) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <h1 className="text-2xl font-bold">Access Denied</h1>
-          <p className="text-muted-foreground">You need admin permissions to access this page.</p>
+          <p className="text-muted-foreground">You need editor permissions to access this page.</p>
           <Button variant="outline" onClick={() => navigate("/admin")}>
             Back to Admin
           </Button>

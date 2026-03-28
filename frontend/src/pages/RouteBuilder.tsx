@@ -42,7 +42,7 @@ export default function RouteBuilder() {
   const { routeId } = useParams<{ routeId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { updateRoute, publishRoute } = useRouteAdmin();
   const { data: stops = [] } = useRouteStops(routeId || undefined);
   const { createStop, updateStop, deleteStop, reorderStops } = useRouteStopMutations();
@@ -129,7 +129,9 @@ export default function RouteBuilder() {
     );
   }
 
-  if (!user || !isAdmin()) {
+  const canEditRoutes = user?.role === "admin" || user?.role === "moderator";
+
+  if (!user || !canEditRoutes) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">

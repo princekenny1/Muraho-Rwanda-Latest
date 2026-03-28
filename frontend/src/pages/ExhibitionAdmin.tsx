@@ -6,7 +6,7 @@ import { ExhibitionAdminPanel } from "@/components/admin/ExhibitionAdminPanel";
 
 export default function ExhibitionAdmin() {
   const navigate = useNavigate();
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -16,14 +16,16 @@ export default function ExhibitionAdmin() {
     );
   }
 
-  if (!user || !isAdmin()) {
+  const canEditExhibitions = user?.role === "admin" || user?.role === "moderator";
+
+  if (!user || !canEditExhibitions) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground">
-            You need admin permissions to access this page.
+            You need editor permissions to access this page.
           </p>
           <Button variant="outline" onClick={() => navigate("/admin")}>
             <ArrowLeft className="h-4 w-4 mr-2" />

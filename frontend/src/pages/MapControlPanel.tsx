@@ -37,7 +37,7 @@ import { LocationManager } from "@/components/cms/LocationManager";
 
 export default function MapControlPanel() {
   const navigate = useNavigate();
-  const { isAdmin } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [mapStyle, setMapStyle] = useState<MapStyle>("light");
   const [layers, setLayers] = useState<MapLayers>({
@@ -205,7 +205,9 @@ export default function MapControlPanel() {
     totalPins: pins.length,
   };
 
-  if (!isAdmin()) {
+  const canEditMap = user?.role === "admin" || user?.role === "moderator";
+
+  if (!canEditMap) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-muted-foreground">Access denied</p>

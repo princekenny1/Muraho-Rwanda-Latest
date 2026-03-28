@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function DocumentaryAdmin() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, loading, isAdmin, signIn, signUp } = useAuth();
+  const { user, loading, signIn, signUp } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -120,14 +120,16 @@ export default function DocumentaryAdmin() {
     );
   }
 
-  if (!isAdmin()) {
+  const canEditDocumentaries = user.role === "admin" || user.role === "moderator";
+
+  if (!canEditDocumentaries) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <Shield className="h-12 w-12 mx-auto text-muted-foreground" />
           <h1 className="text-2xl font-bold">Access Denied</h1>
           <p className="text-muted-foreground">
-            You don't have admin permissions to access this page.
+            You don't have editor permissions to access this page.
           </p>
           <Button variant="outline" onClick={() => navigate("/")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -155,7 +157,7 @@ export default function DocumentaryAdmin() {
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Shield className="h-4 w-4" />
-            <span>Admin</span>
+            <span>Editor</span>
           </div>
         </div>
       </header>
