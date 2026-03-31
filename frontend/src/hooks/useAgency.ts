@@ -441,8 +441,19 @@ export function useAgencyPortal() {
       try {
         const me = await api.me();
         const user = me?.user || me;
-        const aid =
+        let aid =
           typeof user?.agency === "object" ? user.agency?.id : user?.agency;
+
+        // Legacy accounts may not have users.agency set even when they are
+        // linked as tour-agencies.adminUser.
+        if (!aid && user?.id) {
+          const ownedAgencies = await api.find("tour-agencies", {
+            where: { adminUser: { equals: user.id } },
+            limit: 1,
+          });
+          aid = ownedAgencies.docs?.[0]?.id || null;
+        }
+
         setAgencyId(aid || null);
       } catch {
         setAgencyId(null);
