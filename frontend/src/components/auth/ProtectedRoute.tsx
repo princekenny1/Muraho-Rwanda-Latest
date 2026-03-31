@@ -71,6 +71,8 @@ export function EditorRoute({ children }: { children: React.ReactNode }) {
  */
 export function AgencyRoute({ children }: { children: React.ReactNode }) {
   return (
-    <ProtectedRoute role={["agency_admin", "admin"]}>{children}</ProtectedRoute>
+    <ProtectedRoute role={["agency_admin", "agency_operator", "admin"]}>
+      {children}
+    </ProtectedRoute>
   );
 }

@@ -1,29 +1,40 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAgencyPortal } from "@/hooks/useAgency";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  Loader2, 
-  QrCode, 
-  Download, 
-  Copy, 
+import {
+  ArrowLeft,
+  Loader2,
+  QrCode,
+  Download,
+  Copy,
   CheckCircle2,
   Clock,
   Users,
-  Shield
+  Shield,
 } from "lucide-react";
 
 export default function AgencyGenerateCodes() {
-  const navigate = useNavigate();
   const { toast } = useToast();
-  const { agency, generateCode, stats } = useAgencyPortal();
+  const { agency, generateCode } = useAgencyPortal();
   const [loading, setLoading] = useState(false);
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -37,7 +48,7 @@ export default function AgencyGenerateCodes() {
 
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!agency || agency.verification_status !== "verified") {
       toast({
         title: "Not Available",
@@ -50,21 +61,25 @@ export default function AgencyGenerateCodes() {
     setLoading(true);
 
     try {
-      const result = await generateCode({
+      const generatedCodes = await generateCode({
         groupName: formData.groupName,
-        accessLevel: formData.accessLevel,
-        maxUses: parseInt(formData.maxUses),
-        validHours: parseInt(formData.validHours),
+        accessLevel: formData.accessLevel as
+          | "full"
+          | "museums_only"
+          | "stories_only",
+        maxUses: parseInt(formData.maxUses, 10),
+        validHours: parseInt(formData.validHours, 10),
       });
 
-      if (result.error) {
-        throw new Error(result.error);
+      const createdCode = generatedCodes[0];
+      if (!createdCode) {
+        throw new Error("Code generation returned no code");
       }
 
-      setGeneratedCode(result.data?.code || null);
+      setGeneratedCode(createdCode.code);
       toast({
         title: "Code Generated!",
-        description: `Access code ${result.data?.code} is now ready to share.`,
+        description: `Access code ${createdCode.code} is now ready to share.`,
       });
     } catch (error: any) {
       toast({
@@ -89,9 +104,9 @@ export default function AgencyGenerateCodes() {
   const downloadQR = () => {
     // Generate QR code download
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-      `${window.location.origin}/redeem?code=${generatedCode}`
+      `${window.location.origin}/redeem?code=${generatedCode}`,
     )}`;
-    
+
     const link = document.createElement("a");
     link.href = qrUrl;
     link.download = `muraho-access-${generatedCode}.png`;
@@ -150,7 +165,7 @@ export default function AgencyGenerateCodes() {
               <div className="text-center">
                 <img
                   src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
-                    `${window.location.origin}/redeem?code=${generatedCode}`
+                    `${window.location.origin}/redeem?code=${generatedCode}`,
                   )}`}
                   alt="QR Code"
                   className="mx-auto rounded-lg border"
@@ -169,7 +184,9 @@ export default function AgencyGenerateCodes() {
                 </div>
                 <div className="flex items-center gap-2 col-span-2">
                   <Shield className="h-4 w-4 text-muted-foreground" />
-                  <span className="capitalize">{formData.accessLevel.replace("_", " ")} Access</span>
+                  <span className="capitalize">
+                    {formData.accessLevel.replace("_", " ")} Access
+                  </span>
                 </div>
               </div>
 
@@ -187,7 +204,9 @@ export default function AgencyGenerateCodes() {
 
               {/* Share Instructions */}
               <div className="p-4 rounded-lg bg-muted/50 text-sm">
-                <p className="font-medium mb-2">How to share with your group:</p>
+                <p className="font-medium mb-2">
+                  How to share with your group:
+                </p>
                 <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
                   <li>Print QR posters for easy group scanning</li>
                   <li>Share the code via messaging apps</li>
@@ -219,7 +238,9 @@ export default function AgencyGenerateCodes() {
               </div>
               <div>
                 <CardTitle>Create Access Group</CardTitle>
-                <CardDescription>Generate codes for your tour group</CardDescription>
+                <CardDescription>
+                  Generate codes for your tour group
+                </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -232,7 +253,9 @@ export default function AgencyGenerateCodes() {
                   id="group-name"
                   placeholder="e.g., January Gorilla Trek"
                   value={formData.groupName}
-                  onChange={(e) => setFormData({ ...formData, groupName: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, groupName: e.target.value })
+                  }
                   required
                 />
                 <p className="text-xs text-muted-foreground">
@@ -245,7 +268,9 @@ export default function AgencyGenerateCodes() {
                 <Label>Access Level</Label>
                 <RadioGroup
                   value={formData.accessLevel}
-                  onValueChange={(v) => setFormData({ ...formData, accessLevel: v })}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, accessLevel: v })
+                  }
                   className="grid gap-3"
                 >
                   <div className="flex items-center space-x-3 p-3 rounded-lg border bg-card hover:bg-muted/50 cursor-pointer">
@@ -253,7 +278,8 @@ export default function AgencyGenerateCodes() {
                     <Label htmlFor="full" className="flex-1 cursor-pointer">
                       <span className="font-medium">Full Access</span>
                       <p className="text-xs text-muted-foreground">
-                        Stories, museums, testimonies, routes, and all premium content
+                        Stories, museums, testimonies, routes, and all premium
+                        content
                       </p>
                     </Label>
                   </div>
@@ -283,7 +309,9 @@ export default function AgencyGenerateCodes() {
                 <Label htmlFor="max-uses">Number of People</Label>
                 <Select
                   value={formData.maxUses}
-                  onValueChange={(v) => setFormData({ ...formData, maxUses: v })}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, maxUses: v })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -303,7 +331,9 @@ export default function AgencyGenerateCodes() {
                 <Label htmlFor="valid-hours">Access Duration</Label>
                 <Select
                   value={formData.validHours}
-                  onValueChange={(v) => setFormData({ ...formData, validHours: v })}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, validHours: v })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -317,9 +347,9 @@ export default function AgencyGenerateCodes() {
                 </Select>
               </div>
 
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={loading || agency?.verification_status !== "verified"}
               >
                 {loading ? (

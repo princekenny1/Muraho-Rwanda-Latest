@@ -1,11 +1,17 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAgencyPortal, AgencyCode } from "@/hooks/useAgency";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -14,17 +20,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  ArrowLeft, 
-  Plus, 
-  Search, 
-  QrCode, 
-  Copy, 
+import {
+  ArrowLeft,
+  Plus,
+  Search,
+  QrCode,
+  Copy,
   Download,
   Trash2,
   CheckCircle2,
   Clock,
-  Users
+  Users,
 } from "lucide-react";
 
 export default function AgencyCodesList() {
@@ -38,7 +44,7 @@ export default function AgencyCodesList() {
     (code) =>
       code.code.toLowerCase().includes(search.toLowerCase()) ||
       code.group_name?.toLowerCase().includes(search.toLowerCase()) ||
-      code.name?.toLowerCase().includes(search.toLowerCase())
+      code.name?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const copyCode = async (code: string) => {
@@ -48,9 +54,9 @@ export default function AgencyCodesList() {
 
   const downloadQR = (code: string, groupName: string) => {
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(
-      `${window.location.origin}/redeem?code=${code}`
+      `${window.location.origin}/redeem?code=${code}`,
     )}`;
-    
+
     const link = document.createElement("a");
     link.href = qrUrl;
     link.download = `muraho-${groupName || code}.png`;
@@ -59,7 +65,7 @@ export default function AgencyCodesList() {
 
   const handleDeactivate = async () => {
     if (!selectedCode) return;
-    
+
     const result = await deactivateCode(selectedCode.id);
     if (result.error) {
       toast({
@@ -120,7 +126,9 @@ export default function AgencyCodesList() {
             <CardContent className="py-12 text-center">
               <QrCode className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
               <p className="text-muted-foreground">
-                {search ? "No codes match your search" : "No access codes generated yet"}
+                {search
+                  ? "No codes match your search"
+                  : "No access codes generated yet"}
               </p>
               <Button asChild className="mt-4">
                 <Link to="/agency/codes/new">Generate Your First Code</Link>
@@ -134,7 +142,7 @@ export default function AgencyCodesList() {
                 code.is_active &&
                 (!code.expires_at || new Date(code.expires_at) > new Date());
               const usagePercent = Math.round(
-                (code.uses_count / code.max_uses) * 100
+                (code.uses_count / code.max_uses) * 100,
               );
               const expiresDate = code.expires_at
                 ? new Date(code.expires_at)
@@ -163,7 +171,9 @@ export default function AgencyCodesList() {
                         </div>
 
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                          <span className="font-mono font-medium">{code.code}</span>
+                          <span className="font-mono font-medium">
+                            {code.code}
+                          </span>
                           <span className="flex items-center gap-1">
                             <Users className="h-3 w-3" />
                             {code.uses_count}/{code.max_uses} ({usagePercent}%)
@@ -179,8 +189,12 @@ export default function AgencyCodesList() {
                         </div>
 
                         <div className="mt-2">
-                          <Badge variant="outline" className="text-xs capitalize">
-                            {code.access_level.replace("_", " ")} Access
+                          <Badge
+                            variant="outline"
+                            className="text-xs capitalize"
+                          >
+                            {(code.access_level || "full").replace("_", " ")}{" "}
+                            Access
                           </Badge>
                         </div>
                       </div>
@@ -225,7 +239,10 @@ export default function AgencyCodesList() {
         )}
 
         {/* Deactivate Dialog */}
-        <Dialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+        <Dialog
+          open={showDeactivateDialog}
+          onOpenChange={setShowDeactivateDialog}
+        >
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Deactivate Access Code?</DialogTitle>

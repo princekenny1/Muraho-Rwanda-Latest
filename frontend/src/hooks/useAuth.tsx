@@ -28,7 +28,7 @@ export interface User {
   id: string;
   email: string;
   fullName?: string;
-  role: "user" | "moderator" | "agency_admin" | "admin";
+  role: "user" | "moderator" | "agency_admin" | "agency_operator" | "admin";
   accessTier: "free" | "day_pass" | "subscriber" | "agency";
   preferredLanguage: "en" | "fr" | "rw";
   avatar?: { url: string } | null;
@@ -60,8 +60,13 @@ const ROLE_PRIORITY: Array<User["role"]> = [
   "admin",
   "moderator",
   "agency_admin",
+  "agency_operator",
   "user",
 ];
+
+const ROLE_ALIASES: Record<string, User["role"]> = {
+  agency_operator: "agency_admin",
+};
 
 const resolveRole = (raw: any): User["role"] => {
   const candidates = [
@@ -71,6 +76,7 @@ const resolveRole = (raw: any): User["role"] => {
     .map((value) =>
       typeof value === "string" ? value.trim().toLowerCase() : "",
     )
+    .map((value) => ROLE_ALIASES[value] || value)
     .filter(Boolean);
 
   for (const role of ROLE_PRIORITY) {
@@ -250,7 +256,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user]);
 
   const isAgency = useCallback(() => {
-    return user?.role === "agency_admin";
+    return user?.role === "agency_admin" || user?.role === "agency_operator";
   }, [user]);
 
   return (

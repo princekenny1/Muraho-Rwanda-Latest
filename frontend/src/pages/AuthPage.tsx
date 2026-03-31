@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { BrandLogo } from "@/components/brand";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z
@@ -54,7 +55,9 @@ const resolvePostLoginPath = (
   }
 
   if (userRole === "admin") return "/admin";
-  if (userRole === "agency_admin") return "/agency";
+  if (userRole === "agency_admin" || userRole === "agency_operator") {
+    return "/agency";
+  }
   return "/";
 };
 
@@ -246,7 +249,10 @@ export default function AuthPage() {
       <main className="flex-1 flex items-center justify-center px-4 pb-8">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-serif">Visit Rwanda</CardTitle>
+            <div className="mx-auto mb-3">
+              <BrandLogo size="md" />
+            </div>
+            <CardTitle className="text-2xl font-serif">Muraho Rwanda</CardTitle>
             <CardDescription>
               {activeTab === "login"
                 ? "Sign in to your account"

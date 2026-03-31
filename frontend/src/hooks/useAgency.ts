@@ -40,6 +40,7 @@ export interface AgencyCode {
   code: string;
   name: string | null;
   group_name: string | null;
+  access_level: "full" | "museums_only" | "stories_only";
   agency_id: string;
   max_uses: number;
   uses_count: number;
@@ -81,6 +82,7 @@ interface PayloadAccessCode {
   code: string;
   name?: string | null;
   groupName?: string | null;
+  accessLevel?: string;
   agency: string | { id: string };
   maxUses: number;
   usesCount: number;
@@ -94,7 +96,7 @@ function mapAgency(doc: PayloadAgency): Agency {
   const adminId =
     typeof doc.adminUser === "object" && doc.adminUser
       ? doc.adminUser.id
-      : (doc.adminUser as string) ?? null;
+      : ((doc.adminUser as string) ?? null);
 
   return {
     id: doc.id,
@@ -116,14 +118,15 @@ function mapAgency(doc: PayloadAgency): Agency {
 }
 
 function mapCode(doc: PayloadAccessCode): AgencyCode {
-  const agencyId =
-    typeof doc.agency === "object" ? doc.agency.id : doc.agency;
+  const agencyId = typeof doc.agency === "object" ? doc.agency.id : doc.agency;
 
   return {
     id: doc.id,
     code: doc.code,
     name: doc.name ?? null,
     group_name: doc.groupName ?? null,
+    access_level:
+      (doc.accessLevel as "full" | "museums_only" | "stories_only") || "full",
     agency_id: agencyId,
     max_uses: doc.maxUses,
     uses_count: doc.usesCount,
@@ -253,6 +256,7 @@ export function useAgencyCodeMutations() {
       agency_id: string;
       max_uses: number;
       valid_hours: number;
+      access_level?: "full" | "museums_only" | "stories_only";
       expires_at?: string;
     }) => {
       return api.create("access-codes", {
@@ -262,6 +266,7 @@ export function useAgencyCodeMutations() {
         agency: data.agency_id,
         maxUses: data.max_uses,
         usesCount: 0,
+        accessLevel: data.access_level || "full",
         validHours: data.valid_hours,
         expiresAt: data.expires_at,
         isActive: true,
@@ -286,8 +291,10 @@ export function useAgencyCodeMutations() {
       const payload: Record<string, unknown> = {};
       if (updates.is_active !== undefined) payload.isActive = updates.is_active;
       if (updates.max_uses !== undefined) payload.maxUses = updates.max_uses;
-      if (updates.expires_at !== undefined) payload.expiresAt = updates.expires_at;
-      if (updates.group_name !== undefined) payload.groupName = updates.group_name;
+      if (updates.expires_at !== undefined)
+        payload.expiresAt = updates.expires_at;
+      if (updates.group_name !== undefined)
+        payload.groupName = updates.group_name;
       return api.update("access-codes", id, payload);
     },
     onSuccess: () => {
@@ -317,12 +324,11 @@ export function useAgencyStats(agencyId?: string) {
     codesUsed: codes.reduce((sum, c) => sum + c.uses_count, 0),
     activeGroups: codes.filter(
       (c) =>
-        c.is_active &&
-        (!c.expires_at || new Date(c.expires_at) > new Date())
+        c.is_active && (!c.expires_at || new Date(c.expires_at) > new Date()),
     ).length,
     remainingBalance: codes.reduce(
       (sum, c) => sum + Math.max(0, c.max_uses - c.uses_count),
-      0
+      0,
     ),
   };
 
@@ -339,7 +345,10 @@ export async function uploadAgencyLogo(file: File): Promise<string> {
 
 // ── Cryptographic code generator ─────────────────────────────────────────────
 
-function generateSecureCode(format: "short" | "long" | "custom" = "short", prefix?: string): string {
+function generateSecureCode(
+  format: "short" | "long" | "custom" = "short",
+  prefix?: string,
+): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // No I/O/0/1 — avoids confusion
   const arr = new Uint8Array(format === "long" ? 12 : 8);
   crypto.getRandomValues(arr);
@@ -432,7 +441,8 @@ export function useAgencyPortal() {
       try {
         const me = await api.me();
         const user = me?.user || me;
-        const aid = typeof user?.agency === "object" ? user.agency?.id : user?.agency;
+        const aid =
+          typeof user?.agency === "object" ? user.agency?.id : user?.agency;
         setAgencyId(aid || null);
       } catch {
         setAgencyId(null);
@@ -442,8 +452,12 @@ export function useAgencyPortal() {
     fetchMyAgency();
   }, []);
 
-  const { data: agency, isLoading: agencyQueryLoading } = useAgency(agencyId || undefined);
-  const { data: codes = [], isLoading: codesLoading } = useAgencyCodes(agencyId || undefined);
+  const { data: agency, isLoading: agencyQueryLoading } = useAgency(
+    agencyId || undefined,
+  );
+  const { data: codes = [], isLoading: codesLoading } = useAgencyCodes(
+    agencyId || undefined,
+  );
   const { data: purchases = [] } = useAgencyPurchases(agencyId || undefined);
   const stats = useAgencyStats(agencyId || undefined);
   const { createCode, updateCode } = useAgencyCodeMutations();
@@ -457,6 +471,7 @@ export function useAgencyPortal() {
       count?: number;
       maxUses: number;
       validHours: number;
+      accessLevel?: "full" | "museums_only" | "stories_only";
       expiresAt?: string;
       codeFormat?: "short" | "long";
       prefix?: string;
@@ -467,30 +482,45 @@ export function useAgencyPortal() {
       const results: AgencyCode[] = [];
 
       for (let i = 0; i < count; i++) {
-        const code = generateSecureCode(params.codeFormat || "short", params.prefix);
+        const code = generateSecureCode(
+          params.codeFormat || "short",
+          params.prefix,
+        );
         const doc = await createCode.mutateAsync({
           code,
           group_name: params.groupName,
           agency_id: agencyId,
           max_uses: params.maxUses,
           valid_hours: params.validHours,
+          access_level: params.accessLevel,
           expires_at: params.expiresAt,
         });
-        results.push(mapCode(doc as PayloadAccessCode));
+        const createdDoc = ((doc as any)?.doc ?? doc) as PayloadAccessCode;
+        results.push(mapCode(createdDoc));
       }
 
       queryClient.invalidateQueries({ queryKey: ["agency-codes"] });
       return results;
     },
-    [agencyId, createCode, queryClient]
+    [agencyId, createCode, queryClient],
   );
 
   // Deactivate a code
   const deactivateCode = useCallback(
     async (codeId: string) => {
-      await updateCode.mutateAsync({ id: codeId, is_active: false });
+      try {
+        await updateCode.mutateAsync({ id: codeId, is_active: false });
+        return { error: null as string | null };
+      } catch (error: any) {
+        return {
+          error:
+            typeof error?.message === "string"
+              ? error.message
+              : "Failed to deactivate access code",
+        };
+      }
     },
-    [updateCode]
+    [updateCode],
   );
 
   return {
@@ -528,17 +558,19 @@ export function useAgencyPricingPlans() {
         sort: "priceCents",
         limit: 20,
       });
-      return (res.docs as any[]).map((doc): AgencyPricingPlan => ({
-        id: doc.id,
-        name: doc.name,
-        slug: doc.slug,
-        description: doc.description ?? null,
-        price_cents: doc.priceCents,
-        plan_type: doc.planType,
-        included_codes: doc.includedCodes ?? null,
-        validity_days: doc.validityDays,
-        is_active: doc.isActive,
-      }));
+      return (res.docs as any[]).map(
+        (doc): AgencyPricingPlan => ({
+          id: doc.id,
+          name: doc.name,
+          slug: doc.slug,
+          description: doc.description ?? null,
+          price_cents: doc.priceCents,
+          plan_type: doc.planType,
+          included_codes: doc.includedCodes ?? null,
+          validity_days: doc.validityDays,
+          is_active: doc.isActive,
+        }),
+      );
     },
   });
 

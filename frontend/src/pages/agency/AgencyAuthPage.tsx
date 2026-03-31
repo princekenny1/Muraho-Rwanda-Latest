@@ -3,12 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { api } from "@/lib/api/client";
-import { Building2, Mail, Phone, MapPin, Shield, Loader2, User } from "lucide-react";
+import {
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  Shield,
+  Loader2,
+  User,
+} from "lucide-react";
 import { BrandLogo } from "@/components/brand";
 import { AgencyLogoUpload } from "@/components/agency/AgencyLogoUpload";
 
@@ -57,7 +71,8 @@ export default function AgencyAuthPage() {
         await api.logout();
         toast({
           title: "Access Denied",
-          description: "No agency account found for this email. Please sign up as a new agency.",
+          description:
+            "No agency account found for this email. Please sign up as a new agency.",
           variant: "destructive",
         });
         setLoading(false);
@@ -67,7 +82,8 @@ export default function AgencyAuthPage() {
       if (agency.verification_status === "pending") {
         toast({
           title: "Verification Pending",
-          description: "Your agency account is awaiting verification. We'll notify you once approved.",
+          description:
+            "Your agency account is awaiting verification. We'll notify you once approved.",
         });
       }
 
@@ -85,7 +101,7 @@ export default function AgencyAuthPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (signupData.password !== signupData.confirmPassword) {
       toast({
         title: "Passwords Don't Match",
@@ -108,7 +124,11 @@ export default function AgencyAuthPage() {
 
     try {
       // Create user account via Payload
-      const authData = await api.register(signupData.email, signupData.password, signupData.contactName || signupData.agencyName);
+      const authData = await api.register(
+        signupData.email,
+        signupData.password,
+        signupData.contactPerson || signupData.agencyName,
+      );
 
       if (!authData.user) {
         throw new Error("Failed to create user account");
@@ -143,7 +163,8 @@ export default function AgencyAuthPage() {
 
       toast({
         title: "Account Created!",
-        description: "Please check your email to verify your account. We'll review your agency registration shortly.",
+        description:
+          "Please check your email to verify your account. We'll review your agency registration shortly.",
       });
 
       setActiveTab("login");
@@ -219,7 +240,9 @@ export default function AgencyAuthPage() {
                 <div className="flex items-start gap-4">
                   <AgencyLogoUpload
                     value={signupData.logoUrl}
-                    onChange={(url) => setSignupData({ ...signupData, logoUrl: url })}
+                    onChange={(url) =>
+                      setSignupData({ ...signupData, logoUrl: url })
+                    }
                     disabled={loading}
                   />
                   <div className="flex-1 space-y-2">
@@ -231,7 +254,12 @@ export default function AgencyAuthPage() {
                         placeholder="Safari Rwanda Tours"
                         className="pl-10"
                         value={signupData.agencyName}
-                        onChange={(e) => setSignupData({ ...signupData, agencyName: e.target.value })}
+                        onChange={(e) =>
+                          setSignupData({
+                            ...signupData,
+                            agencyName: e.target.value,
+                          })
+                        }
                         required
                       />
                     </div>
@@ -247,7 +275,12 @@ export default function AgencyAuthPage() {
                       placeholder="John Doe"
                       className="pl-10"
                       value={signupData.contactPerson}
-                      onChange={(e) => setSignupData({ ...signupData, contactPerson: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          contactPerson: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -264,7 +297,12 @@ export default function AgencyAuthPage() {
                         placeholder="email@agency.com"
                         className="pl-10"
                         value={signupData.email}
-                        onChange={(e) => setSignupData({ ...signupData, email: e.target.value })}
+                        onChange={(e) =>
+                          setSignupData({
+                            ...signupData,
+                            email: e.target.value,
+                          })
+                        }
                         required
                       />
                     </div>
@@ -279,7 +317,12 @@ export default function AgencyAuthPage() {
                         placeholder="+250 7XX XXX XXX"
                         className="pl-10"
                         value={signupData.phone}
-                        onChange={(e) => setSignupData({ ...signupData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setSignupData({
+                            ...signupData,
+                            phone: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -295,7 +338,12 @@ export default function AgencyAuthPage() {
                         placeholder="Rwanda"
                         className="pl-10"
                         value={signupData.country}
-                        onChange={(e) => setSignupData({ ...signupData, country: e.target.value })}
+                        onChange={(e) =>
+                          setSignupData({
+                            ...signupData,
+                            country: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -305,7 +353,9 @@ export default function AgencyAuthPage() {
                       id="region"
                       placeholder="Kigali"
                       value={signupData.region}
-                      onChange={(e) => setSignupData({ ...signupData, region: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({ ...signupData, region: e.target.value })
+                      }
                     />
                   </div>
                 </div>
@@ -317,7 +367,12 @@ export default function AgencyAuthPage() {
                       id="password"
                       type="password"
                       value={signupData.password}
-                      onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          password: e.target.value,
+                        })
+                      }
                       required
                       minLength={8}
                     />
@@ -328,7 +383,12 @@ export default function AgencyAuthPage() {
                       id="confirm-password"
                       type="password"
                       value={signupData.confirmPassword}
-                      onChange={(e) => setSignupData({ ...signupData, confirmPassword: e.target.value })}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          confirmPassword: e.target.value,
+                        })
+                      }
                       required
                       minLength={8}
                     />
@@ -339,8 +399,11 @@ export default function AgencyAuthPage() {
                   <Checkbox
                     id="licensed"
                     checked={signupData.isLicensed}
-                    onCheckedChange={(checked) => 
-                      setSignupData({ ...signupData, isLicensed: checked as boolean })
+                    onCheckedChange={(checked) =>
+                      setSignupData({
+                        ...signupData,
+                        isLicensed: checked as boolean,
+                      })
                     }
                   />
                   <div className="grid gap-1.5 leading-none">
@@ -348,8 +411,8 @@ export default function AgencyAuthPage() {
                       htmlFor="licensed"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-2"
                     >
-                      <Shield className="h-4 w-4 text-primary" />
-                      I am a licensed tour operator
+                      <Shield className="h-4 w-4 text-primary" />I am a licensed
+                      tour operator
                     </label>
                     <p className="text-xs text-muted-foreground">
                       We may request proof of license during verification
