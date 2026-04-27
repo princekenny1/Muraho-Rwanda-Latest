@@ -168,8 +168,7 @@ const popularRoutes = [
     description: "Stories through the volcanic highlands",
     duration: "2h 15min",
     distance: "116 km",
-    imageUrl:
-      "https://images.unsplash.com/photo-1518709766631-a6a7f45921c3?w=600&q=80",
+    imageUrl: "/content/routes/musanze.jpg",
   },
   {
     id: "2",
@@ -177,8 +176,7 @@ const popularRoutes = [
     description: "Coastal beauty and lakeside villages",
     duration: "3h 30min",
     distance: "180 km",
-    imageUrl:
-      "https://images.unsplash.com/photo-1489392191049-fc10c97e64b6?w=600&q=80",
+    imageUrl: "/content/routes/lake-kivu-medium.jpg",
   },
   {
     id: "3",
@@ -186,8 +184,7 @@ const popularRoutes = [
     description: "Savanna plains and wildlife encounters",
     duration: "4h",
     distance: "220 km",
-    imageUrl:
-      "https://images.unsplash.com/photo-1516426122078-c23e76319801?w=600&q=80",
+    imageUrl: "/content/routes/ibirunga.jpg",
   },
 ];
 

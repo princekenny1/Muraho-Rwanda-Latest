@@ -11,7 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api/client";
+import { normalizeMediaUrl } from "@/lib/mediaUrl";
 import { useToast } from "@/hooks/use-toast";
+import { MapContainer, Marker, Polyline, TileLayer } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import type { Route, RouteStop, StopContentBlock } from "@/types/routes";
 
 const themeColors: Record<string, string> = {
@@ -24,12 +28,75 @@ const themeColors: Record<string, string> = {
   accommodation: "bg-forest-teal",
 };
 
+const routeStopIcon = L.divIcon({
+  className: "muraho-route-stop-pin",
+  html: '<div style="width:12px;height:12px;background:#f59e0b;border:2px solid white;border-radius:9999px;box-shadow:0 0 0 2px rgba(245,158,11,0.25)"></div>',
+  iconSize: [12, 12],
+  iconAnchor: [6, 6],
+});
+
+// TEMP fallback while all route image blocks are completed in CMS.
+const TEMP_ROUTE_GALLERY_FALLBACK = [
+  "/content/routes/musanze.jpg",
+  "/content/routes/ibirunga.jpg",
+  "/content/routes/lake-kivu-medium.jpg",
+  "/content/routes/lake-kivu-shore.webp",
+];
+
+const toLatLngPath = (path: unknown): [number, number][] => {
+  const src = path as any;
+  if (!src) return [];
+
+  const normalizeLineString = (coords: unknown[]): [number, number][] =>
+    coords
+      .filter((c) => Array.isArray(c) && c.length >= 2)
+      .map((c) => [Number((c as number[])[1]), Number((c as number[])[0])])
+      .filter(([lat, lng]) => Number.isFinite(lat) && Number.isFinite(lng));
+
+  if (src.type === "LineString" && Array.isArray(src.coordinates)) {
+    return normalizeLineString(src.coordinates);
+  }
+
+  if (
+    src.type === "Feature" &&
+    src.geometry?.type === "LineString" &&
+    Array.isArray(src.geometry.coordinates)
+  ) {
+    return normalizeLineString(src.geometry.coordinates);
+  }
+
+  return [];
+};
+
+const getImageUrlsFromStops = (stops: RouteStop[]): string[] => {
+  const urls: string[] = [];
+
+  stops.forEach((stop) => {
+    stop.content_blocks.forEach((block) => {
+      if (block.block_type !== "image") return;
+
+      const content = block.content as any;
+      const images = Array.isArray(content?.images) ? content.images : [];
+
+      images.forEach((image: any) => {
+        const url = typeof image?.url === "string" ? image.url.trim() : "";
+        if (url) {
+          urls.push(normalizeMediaUrl(url));
+        }
+      });
+    });
+  });
+
+  return urls;
+};
+
 export default function RouteViewer() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [route, setRoute] = useState<Route | null>(null);
   const [stops, setStops] = useState<RouteStop[]>([]);
+  const [routePath, setRoutePath] = useState<[number, number][]>([]);
   const [loading, setLoading] = useState(true);
   const [activeStop, setActiveStop] = useState<RouteStop | null>(null);
 
@@ -60,11 +127,12 @@ export default function RouteViewer() {
           (routeData as any).shortDescription ||
           null,
         cover_image:
-          typeof (routeData as any).heroImage === "string"
-            ? (routeData as any).heroImage
-            : (routeData as any).heroImage?.url ||
-              (routeData as any).coverImage ||
-              null,
+          normalizeMediaUrl(
+            typeof (routeData as any).heroImage === "string"
+              ? (routeData as any).heroImage
+              : (routeData as any).heroImage?.url ||
+                  (routeData as any).coverImage,
+          ) || null,
         duration_minutes:
           (routeData as any).durationMinutes ||
           (routeData as any).duration_minutes ||
@@ -88,6 +156,7 @@ export default function RouteViewer() {
       };
 
       setRoute(normalizedRoute);
+      setRoutePath(toLatLngPath((routeData as any).routePath));
 
       const stopsRes = await api.find("route-stops", {
         where: { route: { equals: (routeData as any).id } },
@@ -96,23 +165,35 @@ export default function RouteViewer() {
       });
       const stopsData = stopsRes.docs;
 
-      const normalizedStops = (stopsData || []).map((stop: any) => ({
-        id: String(stop.id),
-        route_id: String(stop.route || normalizedRoute.id),
-        title: stop.title || stop.name || "Stop",
-        description: stop.description || null,
-        latitude: stop.latitude || 0,
-        longitude: stop.longitude || 0,
-        stop_order: stop.stopOrder || stop.orderIndex || 1,
-        estimated_time_minutes:
-          stop.estimatedTimeMinutes || stop.estimated_time_minutes || 15,
-        autoplay_on_arrival: !!stop.autoplayOnArrival,
-        marker_color: stop.markerColor || "#F97316",
-        marker_icon: stop.markerIcon || "location",
-        linked_story_id: null,
-        linked_testimony_id: null,
-        content_blocks: [],
-      })) as RouteStop[];
+      const normalizedStops = (stopsData || []).map((stop: any) => {
+        const blocks = Array.isArray(stop.contentBlocks)
+          ? stop.contentBlocks
+          : [];
+
+        return {
+          id: String(stop.id),
+          route_id: String(stop.route || normalizedRoute.id),
+          title: stop.title || stop.name || "Stop",
+          description: stop.description || null,
+          latitude: stop.latitude || 0,
+          longitude: stop.longitude || 0,
+          stop_order: stop.stopOrder || stop.orderIndex || 1,
+          estimated_time_minutes:
+            stop.estimatedTimeMinutes || stop.estimated_time_minutes || 15,
+          autoplay_on_arrival: !!stop.autoplayOnArrival,
+          marker_color: stop.markerColor || "#F97316",
+          marker_icon: stop.markerIcon || "location",
+          linked_story_id: null,
+          linked_testimony_id: null,
+          content_blocks: blocks.map((block: any, index: number) => ({
+            id: String(block.id || `${stop.id}-block-${index}`),
+            stop_id: String(stop.id),
+            block_type: block.blockType || "text",
+            block_order: block.blockOrder || index,
+            content: block.content || {},
+          })),
+        } as RouteStop;
+      });
 
       setStops(normalizedStops);
       setLoading(false);
@@ -136,6 +217,38 @@ export default function RouteViewer() {
       </div>
     );
   }
+
+  const stopPath: [number, number][] = stops
+    .filter(
+      (stop) =>
+        Number.isFinite(stop.latitude) && Number.isFinite(stop.longitude),
+    )
+    .sort((a, b) => a.stop_order - b.stop_order)
+    .map((stop) => [stop.latitude, stop.longitude]);
+
+  const mapPath = routePath.length > 1 ? routePath : stopPath;
+
+  const mapCenter: [number, number] =
+    mapPath[0] || stopPath[0] || ([-1.9403, 29.8739] as [number, number]);
+
+  const travelSpanLabel =
+    stops.length >= 2
+      ? `${stops[0].title} -> ${stops[stops.length - 1].title}`
+      : null;
+
+  const routeGalleryImages = (() => {
+    const fromStops = getImageUrlsFromStops(stops);
+    const all = [route.cover_image, ...fromStops].filter(
+      (url): url is string => typeof url === "string" && url.trim().length > 0,
+    );
+
+    const unique = Array.from(new Set(all));
+    if (unique.length >= 2) return unique.slice(0, 4);
+
+    return Array.from(
+      new Set([...unique, ...TEMP_ROUTE_GALLERY_FALLBACK]),
+    ).slice(0, 4);
+  })();
 
   const handleStartRoute = () => {
     if (stops.length > 0) {
@@ -225,6 +338,74 @@ export default function RouteViewer() {
           {stops.length > 0 ? "Start Route" : "Start Route (No Stops Yet)"}
         </Button>
       </div>
+
+      {travelSpanLabel && (
+        <div className="px-4 mt-4">
+          <div className="rounded-xl bg-muted/30 border border-border/60 p-3 text-sm text-muted-foreground">
+            Journey:{" "}
+            <span className="text-foreground font-medium">
+              {travelSpanLabel}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {(mapPath.length > 1 || stops.length > 0) && (
+        <div className="px-4 mt-6">
+          <h2 className="font-serif text-lg font-semibold text-foreground mb-3">
+            Route Map
+          </h2>
+          <div className="rounded-2xl overflow-hidden border border-border/60 bg-muted/10">
+            <MapContainer
+              center={mapCenter}
+              zoom={10}
+              style={{ height: 240, width: "100%" }}
+            >
+              <TileLayer
+                attribution="&copy; OpenStreetMap contributors"
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+
+              {mapPath.length > 1 && (
+                <Polyline
+                  positions={mapPath}
+                  pathOptions={{ color: "#0f766e", weight: 4, opacity: 0.85 }}
+                />
+              )}
+
+              {stops.map((stop) => (
+                <Marker
+                  key={stop.id}
+                  position={[stop.latitude, stop.longitude]}
+                  icon={routeStopIcon}
+                />
+              ))}
+            </MapContainer>
+          </div>
+        </div>
+      )}
+
+      {routeGalleryImages.length > 0 && (
+        <div className="px-4 mt-6">
+          <h2 className="font-serif text-lg font-semibold text-foreground mb-3">
+            Route Highlights
+          </h2>
+          <div className="grid grid-cols-2 gap-3">
+            {routeGalleryImages.map((imageUrl, index) => (
+              <div
+                key={`${imageUrl}-${index}`}
+                className="rounded-xl overflow-hidden bg-muted/40"
+              >
+                <img
+                  src={imageUrl}
+                  alt={`${route.title} highlight ${index + 1}`}
+                  className="h-28 sm:h-36 w-full object-cover"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Mini Map Strip */}
       {stops.length > 1 && (

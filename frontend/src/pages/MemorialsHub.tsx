@@ -14,9 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api/client";
-import kigaliMemorial from "@/assets/Kigali-Genocide-Memorial.jpg";
-import murambiMemorial from "@/assets/Murambi-Genocide-Memorial.jpg";
-import nyanzaMemorial from "@/assets/Nyanza-of-Butare-Genocide-memorial-.jpg";
+import { normalizeMediaUrl } from "@/lib/mediaUrl";
+
+const kigaliMemorial = "/content/memorials/kigali-genocide-memorial.jpg";
+const murambiMemorial = "/content/memorials/murambi-genocide-memorial.jpg";
+const nyanzaMemorial = "/content/memorials/nyanza-memorial.jpg";
 
 interface MemorialsHubProps {
   onBack?: () => void;
@@ -121,11 +123,14 @@ export function MemorialsHub({ onBack, onMuseumClick }: MemorialsHubProps) {
         const fallback = fallbackMuseums[index % fallbackMuseums.length];
         const hero =
           typeof m.heroImage === "string"
-            ? m.heroImage
+            ? normalizeMediaUrl(m.heroImage)
             : m.heroImage && typeof m.heroImage.url === "string"
-              ? m.heroImage.url
+              ? normalizeMediaUrl(m.heroImage.url)
               : null;
-        const cover = m.coverImage && m.coverImage.trim() ? m.coverImage : null;
+        const cover =
+          m.coverImage && m.coverImage.trim()
+            ? normalizeMediaUrl(m.coverImage)
+            : null;
 
         return {
           id: m.id,

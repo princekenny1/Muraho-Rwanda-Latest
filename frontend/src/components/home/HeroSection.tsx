@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import kigaliHero from "@/assets/cover.jpg";
+
+const kigaliHero = "/content/landing/kigali-convention-center.png";
 
 export function HeroSection() {
   const [isVisible, setIsVisible] = useState(false);

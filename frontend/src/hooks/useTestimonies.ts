@@ -10,6 +10,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
+import { normalizeMediaUrl } from "@/lib/mediaUrl";
 
 // ── Type ──────────────────────────────────────────────
 
@@ -141,7 +142,9 @@ function mapTestimony(doc: any): Testimony {
     slug: doc.slug,
     person_name: doc.personName || doc.person_name || "",
     context: doc.context || doc.description || "",
-    cover_image: doc.heroImage?.url || doc.coverImage || doc.cover_image || "",
+    cover_image: normalizeMediaUrl(
+      doc.heroImage?.url || doc.coverImage || doc.cover_image || "",
+    ),
     category: doc.category || "survivor",
     location: doc.location || null,
     year: doc.year || null,

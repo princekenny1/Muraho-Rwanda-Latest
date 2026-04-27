@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api/client";
+import { normalizeMediaUrl } from "@/lib/mediaUrl";
 
 const FALLBACK_COVER =
   "https://images.unsplash.com/photo-1518709766631-a6a7f45921c3?w=1200&q=80";
@@ -51,7 +52,7 @@ interface MuseumDoc {
 
 const imageUrl = (museum: MuseumDoc): string => {
   if (typeof museum.heroImage === "string" && museum.heroImage.trim()) {
-    return museum.heroImage;
+    return normalizeMediaUrl(museum.heroImage);
   }
 
   if (
@@ -59,11 +60,11 @@ const imageUrl = (museum: MuseumDoc): string => {
     typeof museum.heroImage === "object" &&
     typeof museum.heroImage.url === "string"
   ) {
-    return museum.heroImage.url;
+    return normalizeMediaUrl(museum.heroImage.url);
   }
 
   if (typeof museum.coverImage === "string" && museum.coverImage.trim()) {
-    return museum.coverImage;
+    return normalizeMediaUrl(museum.coverImage);
   }
 
   return FALLBACK_COVER;

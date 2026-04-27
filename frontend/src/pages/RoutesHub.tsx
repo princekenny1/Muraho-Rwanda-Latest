@@ -9,6 +9,7 @@ import {
   Route as RouteIcon,
 } from "lucide-react";
 import { api } from "@/lib/api/client";
+import { normalizeMediaUrl } from "@/lib/mediaUrl";
 
 interface RouteDoc {
   id: string;
@@ -26,13 +27,13 @@ interface RouteDoc {
 
 const getImageUrl = (doc: RouteDoc): string | null => {
   const hero = doc.heroImage;
-  if (typeof hero === "string" && hero.trim()) return hero;
+  if (typeof hero === "string" && hero.trim()) return normalizeMediaUrl(hero);
   if (hero && typeof hero === "object" && typeof hero.url === "string") {
-    return hero.url;
+    return normalizeMediaUrl(hero.url);
   }
 
   if (typeof doc.coverImage === "string" && doc.coverImage.trim()) {
-    return doc.coverImage;
+    return normalizeMediaUrl(doc.coverImage);
   }
 
   return null;
